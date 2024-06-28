@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy vs Sell Price Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .input-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: inline-block;
+            width: 200px;
+        }
+        input, select {
+            width: 150px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .loss {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Buy vs Sell Price Calculator</h1>
+    
+    <div class="input-group">
+        <label for="buyPrice">Buy Price ($/lb):</label>
+        <input type="number" id="buyPrice" step="0.01" min="-0.10" max="0.50" value="0.05">
+    </div>
+    <div class="input-group">
+        <label for="freightDrayage">Freight and Drayage ($):</label>
+        <input type="number" id="freightDrayage" min="0" step="0.01" value="1000">
+    </div>
+    <div class="input-group">
+        <label for="loadingWeight">Loading Weight (lbs):</label>
+        <input type="number" id="loadingWeight" min="0" step="1" value="40000">
+    </div>
+    <div class="input-group">
+        <label for="overheadCost">Overhead Cost ($/lb):</label>
+        <input type="number" id="overheadCost" min="0" step="0.01" value="0.02">
+    </div>
+    <div class="input-group">
+        <label for="profitMargin">Profit Margin ($/lb):</label>
+        <input type="number" id="profitMargin" min="0" step="0.01" value="0.02">
+    </div>
+    <div class="input-group">
+        <label for="unitType">Sale Price Unit:</label>
+        <select id="unitType">
+            <option value="metric">Metric Ton</option>
+            <option value="standard">Standard Ton</option>
+        </select>
+    </div>
+    <div class="input-group">
+        <button onclick="calculatePrices()">Calculate</button>
+    </div>
+
+    <div id="resultTable"></div>
+
+    <script>
+        function calculatePrices() {
+            const buyPrice = parseFloat(document.getElementById('buyPrice').value);
+            const freightDrayage = parseFloat(document.getElementById('freightDrayage').value);
+            const loadingWeight = parseFloat(document.getElementById('loadingWeight').value);
+            const overheadCost = parseFloat(document.getElementById('overheadCost').value);
+            const profitMargin = parseFloat(document.getElementById('profitMargin').value);
+            const unitType = document.getElementById('unitType').value;
+
+            const shippingCost = freightDrayage / loadingWeight;
+            const totalCost = buyPrice + shippingCost + overheadCost + profitMargin;
+            
+            const conversionFactor = unitType === 'metric' ? 2204.62 : 2000;
+            const sellPrice = totalCost * conversionFactor;
+            const buyPricePerTon = buyPrice * conversionFactor;
+
+            const unitLabel = unitType === 'metric' ? 'metric ton' : 'standard ton';
+
+            const resultTable = document.getElementById('resultTable');
+            resultTable.innerHTML = `
+                <table>
+                    <tr>
+                        <th>Buy Price ($/lb)</th>
+                        <th>Buy Price ($/${unitLabel})</th>
+                        <th>Sell Price ($/${unitLabel})</th>
+                    </tr>
+                    <tr>
+                        <td>${buyPrice.toFixed(2)}</td>
+                        <td>${buyPricePerTon.toFixed(2)}</td>
+                        <td class="${sellPrice < buyPricePerTon ? 'loss' : ''}">${sellPrice.toFixed(2)}</td>
+                    </tr>
+                </table>
+                <p>Shipping Cost: $${shippingCost.toFixed(4)}/lb</p>
+                <p>Total Cost: $${totalCost.toFixed(4)}/lb</p>
+            `;
+        }
+
+        // Calculate prices on page load
+        calculatePrices();
+
+        // Add event listeners to all inputs
+        const inputs = document.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.addEventListener('input', calculatePrices);
+            input.addEventListener('change', calculatePrices);
+        });
+    </script>
+</body>
+</html>
