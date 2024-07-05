@@ -67,6 +67,7 @@
         <select id="unitType">
             <option value="metric">Metric Ton</option>
             <option value="standard">Standard Ton</option>
+            <option value="pound">Pound</option>
         </select>
     </div>
     <div class="input-group">
@@ -87,11 +88,24 @@
             const shippingCost = freightDrayage / loadingWeight;
             const totalCost = buyPrice + shippingCost + overheadCost + profitMargin;
             
-            const conversionFactor = unitType === 'metric' ? 2204.62 : 2000;
-            const sellPrice = totalCost * conversionFactor;
-            const buyPricePerTon = buyPrice * conversionFactor;
+            let conversionFactor, unitLabel;
+            switch(unitType) {
+                case 'metric':
+                    conversionFactor = 2204.62;
+                    unitLabel = 'metric ton';
+                    break;
+                case 'standard':
+                    conversionFactor = 2000;
+                    unitLabel = 'standard ton';
+                    break;
+                case 'pound':
+                    conversionFactor = 1;
+                    unitLabel = 'lb';
+                    break;
+            }
 
-            const unitLabel = unitType === 'metric' ? 'metric ton' : 'standard ton';
+            const sellPrice = totalCost * conversionFactor;
+            const buyPricePerUnit = buyPrice * conversionFactor;
 
             const resultTable = document.getElementById('resultTable');
             resultTable.innerHTML = `
@@ -103,8 +117,8 @@
                     </tr>
                     <tr>
                         <td>${buyPrice.toFixed(2)}</td>
-                        <td>${buyPricePerTon.toFixed(2)}</td>
-                        <td class="${sellPrice < buyPricePerTon ? 'loss' : ''}">${sellPrice.toFixed(2)}</td>
+                        <td>${buyPricePerUnit.toFixed(2)}</td>
+                        <td class="${sellPrice < buyPricePerUnit ? 'loss' : ''}">${sellPrice.toFixed(2)}</td>
                     </tr>
                 </table>
                 <p>Shipping Cost: $${shippingCost.toFixed(4)}/lb</p>
