@@ -165,11 +165,66 @@
         tbody tr.sell-row.loss td:not(:first-child) { color: #e74c3c; }
         tbody tr.sell-row.profit td:not(:first-child) { color: #27ae60; }
 
+        /* Table scroll wrapper */
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
-            .input-row { flex-wrap: wrap; }
-            .input-row label { flex: 0 0 100%; margin-bottom: 4px; }
-            .results-grid { grid-template-columns: 1fr; }
+            body { padding: 12px; }
+            h1 { font-size: 22px; margin-bottom: 16px; }
+
+            .mode-toggle { margin-bottom: 16px; }
+            .mode-toggle button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+
+            .card { padding: 16px; margin-bottom: 14px; }
+            .card h2 { font-size: 14px; margin-bottom: 12px; }
+
+            /* Stack inputs: label on top, input + unit side by side */
+            .input-row {
+                flex-wrap: wrap;
+                margin-bottom: 14px;
+                gap: 6px;
+            }
+            .input-row label {
+                flex: 0 0 100%;
+                margin-bottom: 2px;
+                font-size: 13px;
+            }
+            .input-row input[type="number"] {
+                flex: 1;
+                min-width: 0;
+                max-width: none;
+                font-size: 16px; /* prevents iOS zoom on focus */
+            }
+            .input-row select {
+                flex: 0 0 auto;
+                font-size: 14px;
+            }
+
+            /* Stack result summary boxes */
+            .results-grid { grid-template-columns: 1fr; gap: 10px; }
+            .result-box .result-value { font-size: 20px; }
+
+            /* Breakdown table: scrollable, compact */
+            table {
+                min-width: 480px;
+            }
+            thead th {
+                padding: 8px 8px;
+                font-size: 11px;
+                white-space: nowrap;
+            }
+            tbody td {
+                padding: 7px 8px;
+                font-size: 12px;
+                white-space: nowrap;
+            }
         }
     </style>
 </head>
@@ -407,6 +462,7 @@
             ];
 
             let tableHTML = `
+                <div class="table-scroll">
                 <table>
                     <thead>
                         <tr>
@@ -443,6 +499,7 @@
             tableHTML += `
                     </tbody>
                 </table>
+                </div>
                 <p style="margin-top: 12px; font-size: 13px; color: #7f8c8d;">
                     Margin: <strong style="color: ${isProfitable ? '#27ae60' : '#e74c3c'}">
                     $${fmt(profitLb, 4)}/lb (${fmt(profitPct, 1)}%)</strong>
