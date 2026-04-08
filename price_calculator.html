@@ -5,135 +5,460 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buy vs Sell Price Calculator</title>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
+            background: #f5f7fa;
+            color: #333;
         }
-        .input-group {
-            margin-bottom: 10px;
+        h1 {
+            text-align: center;
+            margin-bottom: 24px;
+            color: #2c3e50;
         }
-        label {
-            display: inline-block;
-            width: 200px;
+
+        /* Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
         }
-        input, select {
-            width: 150px;
+        .mode-toggle button {
+            padding: 10px 28px;
+            font-size: 15px;
+            border: 2px solid #3498db;
+            background: #fff;
+            color: #3498db;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
         }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
+        .mode-toggle button:first-child {
+            border-radius: 8px 0 0 8px;
         }
-        th, td {
+        .mode-toggle button:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+        .mode-toggle button.active {
+            background: #3498db;
+            color: #fff;
+        }
+
+        /* Card */
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Input rows */
+        .input-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        .input-row label {
+            flex: 0 0 200px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .input-row input[type="number"] {
+            flex: 1;
+            padding: 8px 12px;
             border: 1px solid #ddd;
-            padding: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            max-width: 160px;
+        }
+        .input-row select {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #f9f9f9;
+            color: #555;
+            cursor: pointer;
+        }
+        .input-row input[type="number"]:focus,
+        .input-row select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.15);
+        }
+
+        /* Results */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .result-box .result-label {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-bottom: 6px;
+        }
+        .result-box .result-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .result-box.profit .result-value { color: #27ae60; }
+        .result-box.loss .result-value { color: #e74c3c; }
+
+        /* Breakdown table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+        thead th {
+            background: #f2f2f2;
+            padding: 10px 12px;
             text-align: right;
+            font-size: 13px;
+            color: #555;
+            border-bottom: 2px solid #ddd;
         }
-        th {
-            background-color: #f2f2f2;
+        thead th:first-child { text-align: left; }
+        tbody td {
+            padding: 9px 12px;
+            text-align: right;
+            font-size: 14px;
+            border-bottom: 1px solid #eee;
         }
-        .loss {
-            color: red;
+        tbody td:first-child {
+            text-align: left;
+            font-weight: 500;
+        }
+        tbody tr.total-row {
+            font-weight: 700;
+            border-top: 2px solid #bbb;
+        }
+        tbody tr.total-row td {
+            padding-top: 12px;
+        }
+        tbody tr.sell-row td {
+            color: #2c3e50;
+            font-weight: 700;
+            font-size: 15px;
+        }
+        tbody tr.sell-row.loss td:not(:first-child) { color: #e74c3c; }
+        tbody tr.sell-row.profit td:not(:first-child) { color: #27ae60; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .input-row { flex-wrap: wrap; }
+            .input-row label { flex: 0 0 100%; margin-bottom: 4px; }
+            .results-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <h1>Buy vs Sell Price Calculator</h1>
-    
-    <div class="input-group">
-        <label for="buyPrice">Buy Price ($/lb):</label>
-        <input type="number" id="buyPrice" step="0.01" min="-0.10" max="0.50" value="0.05">
-    </div>
-    <div class="input-group">
-        <label for="freightDrayage">Freight and Drayage ($):</label>
-        <input type="number" id="freightDrayage" min="0" step="0.01" value="1000">
-    </div>
-    <div class="input-group">
-        <label for="loadingWeight">Loading Weight (lbs):</label>
-        <input type="number" id="loadingWeight" min="0" step="1" value="40000">
-    </div>
-    <div class="input-group">
-        <label for="overheadCost">Overhead Cost ($/lb):</label>
-        <input type="number" id="overheadCost" min="0" step="0.01" value="0.02">
-    </div>
-    <div class="input-group">
-        <label for="profitMargin">Profit Margin ($/lb):</label>
-        <input type="number" id="profitMargin" min="0" step="0.01" value="0.02">
-    </div>
-    <div class="input-group">
-        <label for="unitType">Sale Price Unit:</label>
-        <select id="unitType">
-            <option value="metric">Metric Ton</option>
-            <option value="standard">Standard Ton</option>
-            <option value="pound">Pound</option>
-        </select>
-    </div>
-    <div class="input-group">
-        <button onclick="calculatePrices()">Calculate</button>
+
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+        <button id="modeBuy" class="active" onclick="setMode('buy')">Buy → Sell</button>
+        <button id="modeSell" onclick="setMode('sell')">Sell → Buy</button>
     </div>
 
-    <div id="resultTable"></div>
+    <!-- Inputs -->
+    <div class="card">
+        <h2>Inputs</h2>
+
+        <!-- Buy/Sell Price row (label changes with mode) -->
+        <div class="input-row">
+            <label id="priceLabel" for="priceInput">Buy Price:</label>
+            <input type="number" id="priceInput" step="0.01" value="0.05">
+            <select id="priceUnit">
+                <option value="lb">$/lb</option>
+                <option value="kg">$/kg</option>
+                <option value="standard_ton">$/std ton</option>
+                <option value="metric_ton">$/mt</option>
+            </select>
+        </div>
+
+        <div class="input-row">
+            <label for="freightDrayage">Freight & Drayage:</label>
+            <input type="number" id="freightDrayage" step="0.01" min="0" value="1000">
+            <select id="freightUnit">
+                <option value="flat">$ flat</option>
+                <option value="lb">$/lb</option>
+                <option value="kg">$/kg</option>
+                <option value="standard_ton">$/std ton</option>
+                <option value="metric_ton">$/mt</option>
+            </select>
+        </div>
+
+        <div class="input-row">
+            <label for="loadingWeight">Loading Weight:</label>
+            <input type="number" id="loadingWeight" step="1" min="0" value="40000">
+            <select id="weightUnit">
+                <option value="lb">lbs</option>
+                <option value="kg">kg</option>
+                <option value="standard_ton">std tons</option>
+                <option value="metric_ton">mt</option>
+            </select>
+        </div>
+
+        <div class="input-row">
+            <label for="overheadCost">Overhead Cost:</label>
+            <input type="number" id="overheadCost" step="0.01" min="0" value="0.02">
+            <select id="overheadUnit">
+                <option value="lb">$/lb</option>
+                <option value="kg">$/kg</option>
+                <option value="standard_ton">$/std ton</option>
+                <option value="metric_ton">$/mt</option>
+            </select>
+        </div>
+
+        <div class="input-row">
+            <label for="profitMargin">Profit Margin:</label>
+            <input type="number" id="profitMargin" step="0.01" min="0" value="0.02">
+            <select id="marginUnit">
+                <option value="lb">$/lb</option>
+                <option value="kg">$/kg</option>
+                <option value="standard_ton">$/std ton</option>
+                <option value="metric_ton">$/mt</option>
+                <option value="percent">%</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card" id="resultsCard">
+        <h2>Results</h2>
+        <div id="resultsSummary"></div>
+        <div id="breakdownTable"></div>
+    </div>
 
     <script>
-        function calculatePrices() {
-            const buyPrice = parseFloat(document.getElementById('buyPrice').value);
-            const freightDrayage = parseFloat(document.getElementById('freightDrayage').value);
-            const loadingWeight = parseFloat(document.getElementById('loadingWeight').value);
-            const overheadCost = parseFloat(document.getElementById('overheadCost').value);
-            const profitMargin = parseFloat(document.getElementById('profitMargin').value);
-            const unitType = document.getElementById('unitType').value;
+        // --- Conversion helpers (everything to $/lb internally) ---
+        const TO_LB = {
+            lb: 1,
+            kg: 2.20462,
+            standard_ton: 2000,
+            metric_ton: 2204.62
+        };
 
-            const shippingCost = freightDrayage / loadingWeight;
-            const totalCost = buyPrice + shippingCost + overheadCost + profitMargin;
-            
-            let conversionFactor, unitLabel;
-            switch(unitType) {
-                case 'metric':
-                    conversionFactor = 2204.62;
-                    unitLabel = 'metric ton';
-                    break;
-                case 'standard':
-                    conversionFactor = 2000;
-                    unitLabel = 'standard ton';
-                    break;
-                case 'pound':
-                    conversionFactor = 1;
-                    unitLabel = 'lb';
-                    break;
-            }
-
-            const sellPrice = totalCost * conversionFactor;
-            const buyPricePerUnit = buyPrice * conversionFactor;
-
-            const resultTable = document.getElementById('resultTable');
-            resultTable.innerHTML = `
-                <table>
-                    <tr>
-                        <th>Buy Price ($/lb)</th>
-                        <th>Buy Price ($/${unitLabel})</th>
-                        <th>Sell Price ($/${unitLabel})</th>
-                    </tr>
-                    <tr>
-                        <td>${buyPrice.toFixed(2)}</td>
-                        <td>${buyPricePerUnit.toFixed(2)}</td>
-                        <td class="${sellPrice < buyPricePerUnit ? 'loss' : ''}">${sellPrice.toFixed(2)}</td>
-                    </tr>
-                </table>
-                <p>Shipping Cost: $${shippingCost.toFixed(4)}/lb</p>
-                <p>Total Cost: $${totalCost.toFixed(4)}/lb</p>
-            `;
+        function toPerLb(value, unit) {
+            if (unit === 'percent') return null; // handled separately
+            return value / TO_LB[unit];
         }
 
-        // Calculate prices on page load
-        calculatePrices();
+        function fromPerLb(perLb, unit) {
+            return perLb * TO_LB[unit];
+        }
 
-        // Add event listeners to all inputs
-        const inputs = document.querySelectorAll('input, select');
-        inputs.forEach(input => {
-            input.addEventListener('input', calculatePrices);
-            input.addEventListener('change', calculatePrices);
+        function weightToLbs(value, unit) {
+            return value * TO_LB[unit];
+        }
+
+        function fmt(n, decimals = 2) {
+            return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        }
+
+        // --- Mode ---
+        let currentMode = 'buy'; // 'buy' = Buy→Sell, 'sell' = Sell→Buy
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('modeBuy').classList.toggle('active', mode === 'buy');
+            document.getElementById('modeSell').classList.toggle('active', mode === 'sell');
+            document.getElementById('priceLabel').textContent = mode === 'buy' ? 'Buy Price:' : 'Sell Price:';
+            calculate();
+        }
+
+        // --- Main calculation ---
+        function calculate() {
+            const priceRaw = parseFloat(document.getElementById('priceInput').value) || 0;
+            const priceUnit = document.getElementById('priceUnit').value;
+            const freightRaw = parseFloat(document.getElementById('freightDrayage').value) || 0;
+            const freightUnit = document.getElementById('freightUnit').value;
+            const weightRaw = parseFloat(document.getElementById('loadingWeight').value) || 1;
+            const weightUnit = document.getElementById('weightUnit').value;
+            const overheadRaw = parseFloat(document.getElementById('overheadCost').value) || 0;
+            const overheadUnit = document.getElementById('overheadUnit').value;
+            const marginRaw = parseFloat(document.getElementById('profitMargin').value) || 0;
+            const marginUnit = document.getElementById('marginUnit').value;
+
+            // Convert everything to $/lb
+            const priceLb = toPerLb(priceRaw, priceUnit);
+            const weightLbs = weightToLbs(weightRaw, weightUnit);
+
+            let shippingLb;
+            if (freightUnit === 'flat') {
+                shippingLb = freightRaw / weightLbs;
+            } else {
+                shippingLb = toPerLb(freightRaw, freightUnit);
+            }
+
+            const overheadLb = toPerLb(overheadRaw, overheadUnit);
+
+            if (currentMode === 'buy') {
+                // Buy → Sell: compute sell price
+                let marginLb;
+                if (marginUnit === 'percent') {
+                    marginLb = (priceLb + shippingLb + overheadLb) * (marginRaw / 100);
+                } else {
+                    marginLb = toPerLb(marginRaw, marginUnit);
+                }
+
+                const totalCostLb = priceLb + shippingLb + overheadLb;
+                const sellLb = totalCostLb + marginLb;
+
+                renderResults({
+                    mode: 'buy',
+                    buyLb: priceLb,
+                    shippingLb,
+                    overheadLb,
+                    marginLb,
+                    totalCostLb,
+                    sellLb
+                });
+            } else {
+                // Sell → Buy: compute max buy price
+                let marginLb;
+                if (marginUnit === 'percent') {
+                    // sell = (buy + ship + overhead) * (1 + margin%)
+                    // buy = sell / (1 + margin%) - ship - overhead
+                    const sellLb = priceLb; // in this mode, priceLb is the sell price
+                    const totalCostLb = sellLb / (1 + marginRaw / 100);
+                    marginLb = sellLb - totalCostLb;
+                    const buyLb = totalCostLb - shippingLb - overheadLb;
+
+                    renderResults({
+                        mode: 'sell',
+                        buyLb,
+                        shippingLb,
+                        overheadLb,
+                        marginLb,
+                        totalCostLb,
+                        sellLb
+                    });
+                } else {
+                    marginLb = toPerLb(marginRaw, marginUnit);
+                    const sellLb = priceLb;
+                    const buyLb = sellLb - marginLb - shippingLb - overheadLb;
+                    const totalCostLb = buyLb + shippingLb + overheadLb;
+
+                    renderResults({
+                        mode: 'sell',
+                        buyLb,
+                        shippingLb,
+                        overheadLb,
+                        marginLb,
+                        totalCostLb,
+                        sellLb
+                    });
+                }
+            }
+        }
+
+        function renderResults({ mode, buyLb, shippingLb, overheadLb, marginLb, totalCostLb, sellLb }) {
+            const profitLb = sellLb - totalCostLb;
+            const profitPct = totalCostLb !== 0 ? (profitLb / totalCostLb * 100) : 0;
+            const isProfitable = profitLb >= 0;
+
+            const highlight = mode === 'buy' ? 'sell' : 'buy';
+
+            // Summary boxes
+            const summaryHTML = `
+                <div class="results-grid">
+                    <div class="result-box ${mode === 'sell' ? (isProfitable ? 'profit' : 'loss') : ''}">
+                        <div class="result-label">Max Buy Price</div>
+                        <div class="result-value">$${fmt(buyLb, 4)}/lb</div>
+                    </div>
+                    <div class="result-box ${mode === 'buy' ? (isProfitable ? 'profit' : 'loss') : ''}">
+                        <div class="result-label">Sell Price</div>
+                        <div class="result-value">$${fmt(sellLb, 4)}/lb</div>
+                    </div>
+                </div>
+            `;
+
+            // Breakdown table with per-lb, per-std-ton, per-metric-ton columns
+            const rows = [
+                { label: 'Buy Price', lb: buyLb, highlight: mode === 'sell' },
+                { label: 'Shipping', lb: shippingLb },
+                { label: 'Overhead', lb: overheadLb },
+                { label: 'Total Cost', lb: totalCostLb, isTotal: true },
+                { label: 'Profit Margin', lb: marginLb },
+                { label: 'Sell Price', lb: sellLb, isSell: true, highlight: mode === 'buy' }
+            ];
+
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>$/lb</th>
+                            <th>$/std ton</th>
+                            <th>$/metric ton</th>
+                            <th>$/kg</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            for (const row of rows) {
+                const stdTon = row.lb * 2000;
+                const metricTon = row.lb * 2204.62;
+                const kg = row.lb / 2.20462;
+
+                let trClass = '';
+                if (row.isTotal) trClass = 'total-row';
+                if (row.isSell) trClass = `sell-row ${isProfitable ? 'profit' : 'loss'}`;
+
+                tableHTML += `
+                    <tr class="${trClass}">
+                        <td>${row.label}</td>
+                        <td>${fmt(row.lb, 4)}</td>
+                        <td>${fmt(stdTon, 2)}</td>
+                        <td>${fmt(metricTon, 2)}</td>
+                        <td>${fmt(kg, 4)}</td>
+                    </tr>
+                `;
+            }
+
+            tableHTML += `
+                    </tbody>
+                </table>
+                <p style="margin-top: 12px; font-size: 13px; color: #7f8c8d;">
+                    Margin: <strong style="color: ${isProfitable ? '#27ae60' : '#e74c3c'}">
+                    $${fmt(profitLb, 4)}/lb (${fmt(profitPct, 1)}%)</strong>
+                </p>
+            `;
+
+            document.getElementById('resultsSummary').innerHTML = summaryHTML;
+            document.getElementById('breakdownTable').innerHTML = tableHTML;
+        }
+
+        // --- Init & live updates ---
+        calculate();
+
+        document.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('input', calculate);
+            el.addEventListener('change', calculate);
         });
     </script>
 </body>
