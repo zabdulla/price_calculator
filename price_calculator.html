@@ -373,9 +373,21 @@
         </div>
 
         <div class="input-row">
-            <label for="freightDrayage">Freight & Drayage:</label>
-            <input type="number" id="freightDrayage" step="0.01" min="0" value="1000">
-            <select id="freightUnit">
+            <label for="oceanFreight">Ocean Freight:</label>
+            <input type="number" id="oceanFreight" step="0.01" min="0" value="1500">
+            <select id="oceanFreightUnit">
+                <option value="flat">$ flat</option>
+                <option value="lb">$/lb</option>
+                <option value="kg">$/kg</option>
+                <option value="standard_ton">$/std ton</option>
+                <option value="metric_ton">$/mt</option>
+            </select>
+        </div>
+
+        <div class="input-row">
+            <label for="drayage">Drayage:</label>
+            <input type="number" id="drayage" step="0.01" min="0" value="1000">
+            <select id="drayageUnit">
                 <option value="flat">$ flat</option>
                 <option value="lb">$/lb</option>
                 <option value="kg">$/kg</option>
@@ -397,8 +409,9 @@
 
         <div class="input-row">
             <label for="overheadCost">Overhead Cost:</label>
-            <input type="number" id="overheadCost" step="0.01" min="0" value="0.02">
+            <input type="number" id="overheadCost" step="0.01" min="0" value="0">
             <select id="overheadUnit">
+                <option value="flat">$ flat</option>
                 <option value="lb">$/lb</option>
                 <option value="kg">$/kg</option>
                 <option value="standard_ton">$/std ton</option>
@@ -408,7 +421,7 @@
 
         <div class="input-row">
             <label for="profitMargin">Profit Margin:</label>
-            <input type="number" id="profitMargin" step="0.01" min="0" value="0.02">
+            <input type="number" id="profitMargin" step="0.01" min="0" value="0">
             <select id="marginUnit">
                 <option value="lb">$/lb</option>
                 <option value="kg">$/kg</option>
@@ -475,10 +488,11 @@
         const STORAGE_KEY = 'priceCalcState';
         const DEFAULTS = {
             priceInput: '0.05', priceUnit: 'lb',
-            freightDrayage: '1000', freightUnit: 'flat',
+            oceanFreight: '1500', oceanFreightUnit: 'flat',
+            drayage: '1000', drayageUnit: 'flat',
             loadingWeight: '40000', weightUnit: 'lb',
-            overheadCost: '0.02', overheadUnit: 'lb',
-            profitMargin: '0.02', marginUnit: 'lb',
+            overheadCost: '0', overheadUnit: 'flat',
+            profitMargin: '0', marginUnit: 'lb',
             displayUnit: 'lb', mode: 'buy'
         };
 
@@ -526,12 +540,20 @@
             calculate();
         }
 
+        // --- Helper to convert a value to $/lb, supporting flat rate ---
+        function toPerLbOrFlat(value, unit, weightLbs) {
+            if (unit === 'flat') return weightLbs > 0 ? value / weightLbs : 0;
+            return toPerLb(value, unit);
+        }
+
         // --- Main calculation ---
         function calculate() {
             const priceRaw = parseFloat(document.getElementById('priceInput').value) || 0;
             const priceUnit = document.getElementById('priceUnit').value;
-            const freightRaw = parseFloat(document.getElementById('freightDrayage').value) || 0;
-            const freightUnit = document.getElementById('freightUnit').value;
+            const oceanFreightRaw = parseFloat(document.getElementById('oceanFreight').value) || 0;
+            const oceanFreightUnit = document.getElementById('oceanFreightUnit').value;
+            const drayageRaw = parseFloat(document.getElementById('drayage').value) || 0;
+            const drayageUnit = document.getElementById('drayageUnit').value;
             const weightRaw = parseFloat(document.getElementById('loadingWeight').value) || 0;
             const weightUnit = document.getElementById('weightUnit').value;
             const overheadRaw = parseFloat(document.getElementById('overheadCost').value) || 0;
@@ -543,30 +565,26 @@
             const priceLb = toPerLb(priceRaw, priceUnit);
             const weightLbs = weightToLbs(weightRaw, weightUnit);
 
-            let shippingLb;
-            if (freightUnit === 'flat') {
-                shippingLb = weightLbs > 0 ? freightRaw / weightLbs : 0;
-            } else {
-                shippingLb = toPerLb(freightRaw, freightUnit);
-            }
-
-            const overheadLb = toPerLb(overheadRaw, overheadUnit);
+            const oceanFreightLb = toPerLbOrFlat(oceanFreightRaw, oceanFreightUnit, weightLbs);
+            const drayageLb = toPerLbOrFlat(drayageRaw, drayageUnit, weightLbs);
+            const overheadLb = toPerLbOrFlat(overheadRaw, overheadUnit, weightLbs);
 
             if (currentMode === 'buy') {
                 let marginLb;
                 if (marginUnit === 'percent') {
-                    marginLb = (priceLb + shippingLb + overheadLb) * (marginRaw / 100);
+                    marginLb = (priceLb + oceanFreightLb + drayageLb + overheadLb) * (marginRaw / 100);
                 } else {
                     marginLb = toPerLb(marginRaw, marginUnit);
                 }
 
-                const totalCostLb = priceLb + shippingLb + overheadLb;
+                const totalCostLb = priceLb + oceanFreightLb + drayageLb + overheadLb;
                 const sellLb = totalCostLb + marginLb;
 
                 renderResults({
                     mode: 'buy',
                     buyLb: priceLb,
-                    shippingLb,
+                    oceanFreightLb,
+                    drayageLb,
                     overheadLb,
                     marginLb,
                     totalCostLb,
@@ -579,12 +597,13 @@
                     const sellLb = priceLb;
                     const totalCostLb = sellLb / (1 + marginRaw / 100);
                     marginLb = sellLb - totalCostLb;
-                    const buyLb = totalCostLb - shippingLb - overheadLb;
+                    const buyLb = totalCostLb - oceanFreightLb - drayageLb - overheadLb;
 
                     renderResults({
                         mode: 'sell',
                         buyLb,
-                        shippingLb,
+                        oceanFreightLb,
+                        drayageLb,
                         overheadLb,
                         marginLb,
                         totalCostLb,
@@ -594,13 +613,14 @@
                 } else {
                     marginLb = toPerLb(marginRaw, marginUnit);
                     const sellLb = priceLb;
-                    const buyLb = sellLb - marginLb - shippingLb - overheadLb;
-                    const totalCostLb = buyLb + shippingLb + overheadLb;
+                    const buyLb = sellLb - marginLb - oceanFreightLb - drayageLb - overheadLb;
+                    const totalCostLb = buyLb + oceanFreightLb + drayageLb + overheadLb;
 
                     renderResults({
                         mode: 'sell',
                         buyLb,
-                        shippingLb,
+                        oceanFreightLb,
+                        drayageLb,
                         overheadLb,
                         marginLb,
                         totalCostLb,
@@ -616,7 +636,7 @@
         const UNIT_LABELS = { lb: '/lb', kg: '/kg', standard_ton: '/std ton', metric_ton: '/mt' };
         const UNIT_DECIMALS = { lb: 4, kg: 4, standard_ton: 2, metric_ton: 2 };
 
-        function renderResults({ mode, buyLb, shippingLb, overheadLb, marginLb, totalCostLb, sellLb, weightLbs }) {
+        function renderResults({ mode, buyLb, oceanFreightLb, drayageLb, overheadLb, marginLb, totalCostLb, sellLb, weightLbs }) {
             const profitLb = sellLb - totalCostLb;
             const profitPct = totalCostLb !== 0 ? (profitLb / totalCostLb * 100) : 0;
             const isProfitable = profitLb >= 0;
@@ -651,7 +671,8 @@
             // Breakdown table
             const rows = [
                 { label: 'Buy Price', lb: buyLb },
-                { label: 'Shipping', lb: shippingLb },
+                { label: 'Ocean Freight', lb: oceanFreightLb },
+                { label: 'Drayage', lb: drayageLb },
                 { label: 'Overhead', lb: overheadLb },
                 { label: 'Total Cost', lb: totalCostLb, isTotal: true },
                 { label: 'Profit Margin', lb: marginLb },
