@@ -72,6 +72,32 @@
             margin-bottom: 0;
         }
 
+        /* Display unit picker */
+        .display-unit-picker {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .display-unit-picker label {
+            font-size: 12px;
+            color: #7f8c8d;
+            white-space: nowrap;
+        }
+        .display-unit-picker select {
+            padding: 5px 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #f9f9f9;
+            color: #555;
+            cursor: pointer;
+        }
+        .display-unit-picker select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.15);
+        }
+
         /* Reset button */
         .btn-reset {
             padding: 6px 14px;
@@ -253,6 +279,12 @@
                 border-color: #e74c3c;
                 color: #e74c3c;
             }
+            .display-unit-picker select {
+                background: #0f3460;
+                border-color: #2c3e6d;
+                color: #e0e0e0;
+            }
+            .display-unit-picker label { color: #95a5a6; }
         }
 
         /* Responsive */
@@ -389,7 +421,18 @@
 
     <!-- Results -->
     <div class="card" id="resultsCard">
-        <h2>Results</h2>
+        <div class="card-header">
+            <h2>Results</h2>
+            <div class="display-unit-picker">
+                <label for="displayUnit">Display in:</label>
+                <select id="displayUnit">
+                    <option value="lb">$/lb</option>
+                    <option value="kg">$/kg</option>
+                    <option value="standard_ton">$/std ton</option>
+                    <option value="metric_ton">$/mt</option>
+                </select>
+            </div>
+        </div>
         <div id="resultsSummary"></div>
         <div id="breakdownTable"></div>
     </div>
@@ -436,7 +479,7 @@
             loadingWeight: '40000', weightUnit: 'lb',
             overheadCost: '0.02', overheadUnit: 'lb',
             profitMargin: '0.02', marginUnit: 'lb',
-            mode: 'buy'
+            displayUnit: 'lb', mode: 'buy'
         };
 
         function saveState() {
@@ -570,25 +613,33 @@
             saveState();
         }
 
+        const UNIT_LABELS = { lb: '/lb', kg: '/kg', standard_ton: '/std ton', metric_ton: '/mt' };
+        const UNIT_DECIMALS = { lb: 4, kg: 4, standard_ton: 2, metric_ton: 2 };
+
         function renderResults({ mode, buyLb, shippingLb, overheadLb, marginLb, totalCostLb, sellLb, weightLbs }) {
             const profitLb = sellLb - totalCostLb;
             const profitPct = totalCostLb !== 0 ? (profitLb / totalCostLb * 100) : 0;
             const isProfitable = profitLb >= 0;
 
+            const dispUnit = document.getElementById('displayUnit').value;
+            const dispLabel = UNIT_LABELS[dispUnit];
+            const dispDec = UNIT_DECIMALS[dispUnit];
+            const buyDisp = fromPerLb(buyLb, dispUnit);
+            const sellDisp = fromPerLb(sellLb, dispUnit);
+            const profitDisp = fromPerLb(profitLb, dispUnit);
+
             const buyLabel = mode === 'sell' ? 'Max Buy Price' : 'Buy Price';
-            const totalLoadBuy = buyLb * weightLbs;
-            const totalLoadSell = sellLb * weightLbs;
 
             // Summary boxes
             const summaryHTML = `
                 <div class="results-grid">
                     <div class="result-box ${mode === 'sell' ? (isProfitable ? 'profit' : 'loss') : ''}">
                         <div class="result-label">${buyLabel}</div>
-                        <div class="result-value">${fmtDollar(buyLb, 4)}/lb</div>
+                        <div class="result-value">${fmtDollar(buyDisp, dispDec)}${dispLabel}</div>
                     </div>
                     <div class="result-box ${mode === 'buy' ? (isProfitable ? 'profit' : 'loss') : ''}">
                         <div class="result-label">Sell Price</div>
-                        <div class="result-value">${fmtDollar(sellLb, 4)}/lb</div>
+                        <div class="result-value">${fmtDollar(sellDisp, dispDec)}${dispLabel}</div>
                     </div>
                     <div class="result-box ${isProfitable ? 'profit' : 'loss'}">
                         <div class="result-label">Total Load Profit</div>
@@ -651,7 +702,7 @@
                 </div>
                 <p style="margin-top: 12px; font-size: 13px; color: #7f8c8d;">
                     Margin: <strong style="color: ${isProfitable ? '#27ae60' : '#e74c3c'}">
-                    ${fmtDollar(profitLb, 4)}/lb (${fmt(profitPct, 1)}%)</strong>
+                    ${fmtDollar(profitDisp, dispDec)}${dispLabel} (${fmt(profitPct, 1)}%)</strong>
                     &nbsp;|&nbsp; Total load profit:
                     <strong style="color: ${isProfitable ? '#27ae60' : '#e74c3c'}">
                     ${fmtDollar(profitLb * weightLbs, 2)}</strong>
