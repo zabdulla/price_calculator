@@ -62,6 +62,32 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .card-header h2 {
+            margin-bottom: 0;
+        }
+
+        /* Reset button */
+        .btn-reset {
+            padding: 6px 14px;
+            font-size: 12px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            background: #fff;
+            color: #777;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .btn-reset:hover {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
 
         /* Input rows */
         .input-row {
@@ -102,7 +128,7 @@
         /* Results */
         .results-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 16px;
             margin-bottom: 16px;
         }
@@ -171,6 +197,64 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            body { background: #1a1a2e; color: #e0e0e0; }
+            h1 { color: #e0e0e0; }
+            .mode-toggle button {
+                background: #16213e;
+                border-color: #3498db;
+                color: #5dade2;
+            }
+            .mode-toggle button.active {
+                background: #3498db;
+                color: #fff;
+            }
+            .card {
+                background: #16213e;
+                box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            }
+            .card h2 { color: #95a5a6; }
+            .input-row input[type="number"] {
+                background: #0f3460;
+                border-color: #2c3e6d;
+                color: #e0e0e0;
+            }
+            .input-row select {
+                background: #0f3460;
+                border-color: #2c3e6d;
+                color: #e0e0e0;
+            }
+            .input-row input[type="number"]:focus,
+            .input-row select:focus {
+                border-color: #5dade2;
+                box-shadow: 0 0 0 2px rgba(93,173,226,0.2);
+            }
+            .result-box { background: #0f3460; }
+            .result-box .result-value { color: #e0e0e0; }
+            thead th {
+                background: #0f3460;
+                color: #95a5a6;
+                border-bottom-color: #2c3e6d;
+            }
+            tbody td {
+                border-bottom-color: #1a2744;
+                color: #ccc;
+            }
+            tbody td:first-child { color: #e0e0e0; }
+            tbody tr.total-row { border-top-color: #3c5078; }
+            tbody tr.sell-row td { color: #e0e0e0; }
+            .btn-reset {
+                background: #16213e;
+                border-color: #3c5078;
+                color: #95a5a6;
+            }
+            .btn-reset:hover {
+                border-color: #e74c3c;
+                color: #e74c3c;
+            }
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             body { padding: 12px; }
@@ -213,7 +297,7 @@
 
             /* Breakdown table: scrollable, compact */
             table {
-                min-width: 480px;
+                min-width: 560px;
             }
             thead th {
                 padding: 8px 8px;
@@ -239,7 +323,10 @@
 
     <!-- Inputs -->
     <div class="card">
-        <h2>Inputs</h2>
+        <div class="card-header">
+            <h2>Inputs</h2>
+            <button class="btn-reset" onclick="resetDefaults()" title="Reset all inputs to defaults">Reset</button>
+        </div>
 
         <!-- Buy/Sell Price row (label changes with mode) -->
         <div class="input-row">
@@ -317,7 +404,7 @@
         };
 
         function toPerLb(value, unit) {
-            if (unit === 'percent') return null; // handled separately
+            if (unit === 'percent') return null;
             return value / TO_LB[unit];
         }
 
@@ -330,11 +417,63 @@
         }
 
         function fmt(n, decimals = 2) {
+            if (!isFinite(n)) return '--';
             return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
         }
 
+        function fmtDollar(n, decimals = 2) {
+            if (!isFinite(n)) return '--';
+            const abs = Math.abs(n);
+            const formatted = abs.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+            return n < 0 ? `-$${formatted}` : `$${formatted}`;
+        }
+
+        // --- localStorage persistence ---
+        const STORAGE_KEY = 'priceCalcState';
+        const DEFAULTS = {
+            priceInput: '0.05', priceUnit: 'lb',
+            freightDrayage: '1000', freightUnit: 'flat',
+            loadingWeight: '40000', weightUnit: 'lb',
+            overheadCost: '0.02', overheadUnit: 'lb',
+            profitMargin: '0.02', marginUnit: 'lb',
+            mode: 'buy'
+        };
+
+        function saveState() {
+            const state = {};
+            for (const id of Object.keys(DEFAULTS)) {
+                if (id === 'mode') { state.mode = currentMode; continue; }
+                const el = document.getElementById(id);
+                if (el) state[id] = el.value;
+            }
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+        }
+
+        function loadState() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                if (!saved) return;
+                for (const [id, val] of Object.entries(saved)) {
+                    if (id === 'mode') continue;
+                    const el = document.getElementById(id);
+                    if (el) el.value = val;
+                }
+                if (saved.mode) setMode(saved.mode);
+            } catch (e) {}
+        }
+
+        function resetDefaults() {
+            for (const [id, val] of Object.entries(DEFAULTS)) {
+                if (id === 'mode') continue;
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+            }
+            setMode(DEFAULTS.mode);
+            try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        }
+
         // --- Mode ---
-        let currentMode = 'buy'; // 'buy' = Buy→Sell, 'sell' = Sell→Buy
+        let currentMode = 'buy';
 
         function setMode(mode) {
             currentMode = mode;
@@ -350,7 +489,7 @@
             const priceUnit = document.getElementById('priceUnit').value;
             const freightRaw = parseFloat(document.getElementById('freightDrayage').value) || 0;
             const freightUnit = document.getElementById('freightUnit').value;
-            const weightRaw = parseFloat(document.getElementById('loadingWeight').value) || 1;
+            const weightRaw = parseFloat(document.getElementById('loadingWeight').value) || 0;
             const weightUnit = document.getElementById('weightUnit').value;
             const overheadRaw = parseFloat(document.getElementById('overheadCost').value) || 0;
             const overheadUnit = document.getElementById('overheadUnit').value;
@@ -363,7 +502,7 @@
 
             let shippingLb;
             if (freightUnit === 'flat') {
-                shippingLb = freightRaw / weightLbs;
+                shippingLb = weightLbs > 0 ? freightRaw / weightLbs : 0;
             } else {
                 shippingLb = toPerLb(freightRaw, freightUnit);
             }
@@ -371,7 +510,6 @@
             const overheadLb = toPerLb(overheadRaw, overheadUnit);
 
             if (currentMode === 'buy') {
-                // Buy → Sell: compute sell price
                 let marginLb;
                 if (marginUnit === 'percent') {
                     marginLb = (priceLb + shippingLb + overheadLb) * (marginRaw / 100);
@@ -389,15 +527,13 @@
                     overheadLb,
                     marginLb,
                     totalCostLb,
-                    sellLb
+                    sellLb,
+                    weightLbs
                 });
             } else {
-                // Sell → Buy: compute max buy price
                 let marginLb;
                 if (marginUnit === 'percent') {
-                    // sell = (buy + ship + overhead) * (1 + margin%)
-                    // buy = sell / (1 + margin%) - ship - overhead
-                    const sellLb = priceLb; // in this mode, priceLb is the sell price
+                    const sellLb = priceLb;
                     const totalCostLb = sellLb / (1 + marginRaw / 100);
                     marginLb = sellLb - totalCostLb;
                     const buyLb = totalCostLb - shippingLb - overheadLb;
@@ -409,7 +545,8 @@
                         overheadLb,
                         marginLb,
                         totalCostLb,
-                        sellLb
+                        sellLb,
+                        weightLbs
                     });
                 } else {
                     marginLb = toPerLb(marginRaw, marginUnit);
@@ -424,41 +561,50 @@
                         overheadLb,
                         marginLb,
                         totalCostLb,
-                        sellLb
+                        sellLb,
+                        weightLbs
                     });
                 }
             }
+
+            saveState();
         }
 
-        function renderResults({ mode, buyLb, shippingLb, overheadLb, marginLb, totalCostLb, sellLb }) {
+        function renderResults({ mode, buyLb, shippingLb, overheadLb, marginLb, totalCostLb, sellLb, weightLbs }) {
             const profitLb = sellLb - totalCostLb;
             const profitPct = totalCostLb !== 0 ? (profitLb / totalCostLb * 100) : 0;
             const isProfitable = profitLb >= 0;
 
-            const highlight = mode === 'buy' ? 'sell' : 'buy';
+            const buyLabel = mode === 'sell' ? 'Max Buy Price' : 'Buy Price';
+            const totalLoadBuy = buyLb * weightLbs;
+            const totalLoadSell = sellLb * weightLbs;
 
             // Summary boxes
             const summaryHTML = `
                 <div class="results-grid">
                     <div class="result-box ${mode === 'sell' ? (isProfitable ? 'profit' : 'loss') : ''}">
-                        <div class="result-label">Max Buy Price</div>
-                        <div class="result-value">$${fmt(buyLb, 4)}/lb</div>
+                        <div class="result-label">${buyLabel}</div>
+                        <div class="result-value">${fmtDollar(buyLb, 4)}/lb</div>
                     </div>
                     <div class="result-box ${mode === 'buy' ? (isProfitable ? 'profit' : 'loss') : ''}">
                         <div class="result-label">Sell Price</div>
-                        <div class="result-value">$${fmt(sellLb, 4)}/lb</div>
+                        <div class="result-value">${fmtDollar(sellLb, 4)}/lb</div>
+                    </div>
+                    <div class="result-box ${isProfitable ? 'profit' : 'loss'}">
+                        <div class="result-label">Total Load Profit</div>
+                        <div class="result-value">${fmtDollar(profitLb * weightLbs, 0)}</div>
                     </div>
                 </div>
             `;
 
-            // Breakdown table with per-lb, per-std-ton, per-metric-ton columns
+            // Breakdown table
             const rows = [
-                { label: 'Buy Price', lb: buyLb, highlight: mode === 'sell' },
+                { label: 'Buy Price', lb: buyLb },
                 { label: 'Shipping', lb: shippingLb },
                 { label: 'Overhead', lb: overheadLb },
                 { label: 'Total Cost', lb: totalCostLb, isTotal: true },
                 { label: 'Profit Margin', lb: marginLb },
-                { label: 'Sell Price', lb: sellLb, isSell: true, highlight: mode === 'buy' }
+                { label: 'Sell Price', lb: sellLb, isSell: true }
             ];
 
             let tableHTML = `
@@ -471,15 +617,17 @@
                             <th>$/std ton</th>
                             <th>$/metric ton</th>
                             <th>$/kg</th>
+                            <th>Total Load</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
             for (const row of rows) {
-                const stdTon = row.lb * 2000;
-                const metricTon = row.lb * 2204.62;
-                const kg = row.lb / 2.20462;
+                const stdTon = fromPerLb(row.lb, 'standard_ton');
+                const metricTon = fromPerLb(row.lb, 'metric_ton');
+                const kg = fromPerLb(row.lb, 'kg');
+                const totalLoad = row.lb * weightLbs;
 
                 let trClass = '';
                 if (row.isTotal) trClass = 'total-row';
@@ -492,6 +640,7 @@
                         <td>${fmt(stdTon, 2)}</td>
                         <td>${fmt(metricTon, 2)}</td>
                         <td>${fmt(kg, 4)}</td>
+                        <td>${fmtDollar(totalLoad, 0)}</td>
                     </tr>
                 `;
             }
@@ -502,7 +651,10 @@
                 </div>
                 <p style="margin-top: 12px; font-size: 13px; color: #7f8c8d;">
                     Margin: <strong style="color: ${isProfitable ? '#27ae60' : '#e74c3c'}">
-                    $${fmt(profitLb, 4)}/lb (${fmt(profitPct, 1)}%)</strong>
+                    ${fmtDollar(profitLb, 4)}/lb (${fmt(profitPct, 1)}%)</strong>
+                    &nbsp;|&nbsp; Total load profit:
+                    <strong style="color: ${isProfitable ? '#27ae60' : '#e74c3c'}">
+                    ${fmtDollar(profitLb * weightLbs, 2)}</strong>
                 </p>
             `;
 
@@ -511,6 +663,7 @@
         }
 
         // --- Init & live updates ---
+        loadState();
         calculate();
 
         document.querySelectorAll('input, select').forEach(el => {
