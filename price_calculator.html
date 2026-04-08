@@ -202,6 +202,14 @@
             text-align: left;
             font-weight: 500;
         }
+        tbody tr.subtotal-row {
+            font-weight: 600;
+            font-style: italic;
+            border-top: 1px solid #ccc;
+        }
+        tbody tr.subtotal-row td {
+            color: #666;
+        }
         tbody tr.total-row {
             font-weight: 700;
             border-top: 2px solid #bbb;
@@ -268,6 +276,8 @@
                 color: #ccc;
             }
             tbody td:first-child { color: #e0e0e0; }
+            tbody tr.subtotal-row { border-top-color: #2c3e6d; }
+            tbody tr.subtotal-row td { color: #95a5a6; }
             tbody tr.total-row { border-top-color: #3c5078; }
             tbody tr.sell-row td { color: #e0e0e0; }
             .btn-reset {
@@ -673,6 +683,7 @@
                 { label: 'Buy Price', lb: buyLb },
                 { label: 'Ocean Freight', lb: oceanFreightLb },
                 { label: 'Drayage', lb: drayageLb },
+                { label: 'Total Freight', lb: oceanFreightLb + drayageLb, isSubtotal: true },
                 { label: 'Overhead', lb: overheadLb },
                 { label: 'Total Cost', lb: totalCostLb, isTotal: true },
                 { label: 'Profit Margin', lb: marginLb },
@@ -702,6 +713,7 @@
                 const totalLoad = row.lb * weightLbs;
 
                 let trClass = '';
+                if (row.isSubtotal) trClass = 'subtotal-row';
                 if (row.isTotal) trClass = 'total-row';
                 if (row.isSell) trClass = `sell-row ${isProfitable ? 'profit' : 'loss'}`;
 
