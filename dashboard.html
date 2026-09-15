@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Converting Job Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f7fa;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 24px;
+        }
+        .nav-link {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .nav-link a {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .nav-link a:hover { text-decoration: underline; }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: end;
+            margin-bottom: 24px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 20px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .control-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .control-group select,
+        .control-group input {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #f9f9f9;
+            color: #555;
+            cursor: pointer;
+        }
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52,152,219,0.15);
+        }
+        .file-upload {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .file-upload label.btn {
+            padding: 8px 16px;
+            background: #3498db;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .file-upload label.btn:hover { background: #2980b9; }
+        .file-upload input[type="file"] { display: none; }
+        .file-name {
+            font-size: 12px;
+            color: #7f8c8d;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 16px;
+            text-align: center;
+        }
+        .kpi-card .kpi-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .kpi-card .kpi-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .kpi-card .kpi-sub {
+            font-size: 11px;
+            color: #95a5a6;
+            margin-top: 4px;
+        }
+
+        /* Charts */
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            body { background: #1a1a2e; color: #e0e0e0; }
+            h1 { color: #e0e0e0; }
+            .subtitle { color: #95a5a6; }
+            .nav-link a { color: #5dade2; }
+            .controls {
+                background: #16213e;
+                box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            }
+            .control-group select,
+            .control-group input {
+                background: #0f3460;
+                border-color: #2c3e6d;
+                color: #e0e0e0;
+            }
+            .kpi-card {
+                background: #16213e;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+            .kpi-card .kpi-value { color: #e0e0e0; }
+            .card {
+                background: #16213e;
+                box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            }
+            .card h2 { color: #95a5a6; }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            h1 { font-size: 22px; }
+            .controls { padding: 14px; gap: 10px; }
+            .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .kpi-card .kpi-value { font-size: 20px; }
+            .chart-container { height: 260px; }
+            .card { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Converting Job Dashboard</h1>
+    <p class="subtitle">Production throughput, yield, and value analysis</p>
+    <div class="nav-link"><a href="price_calculator.html">← Price Calculator</a></div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <div class="control-group file-upload">
+            <label class="btn" for="csvFile">Load CSV</label>
+            <input type="file" id="csvFile" accept=".csv">
+            <span class="file-name" id="fileName">No file loaded</span>
+        </div>
+        <div class="control-group">
+            <label for="warehouseFilter">Warehouse</label>
+            <select id="warehouseFilter"><option value="all">All Warehouses</option></select>
+        </div>
+        <div class="control-group">
+            <label for="machineFilter">Machine</label>
+            <select id="machineFilter"><option value="all">All Machines</option></select>
+        </div>
+        <div class="control-group">
+            <label for="statusFilter">Status</label>
+            <select id="statusFilter">
+                <option value="all">All</option>
+                <option value="completed" selected>Completed</option>
+                <option value="in_process">In Process</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label for="smoothing">Smoothing</label>
+            <select id="smoothing">
+                <option value="1">Daily (none)</option>
+                <option value="7" selected>1 Week</option>
+                <option value="14">2 Weeks</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- Charts -->
+    <div class="card">
+        <h2>Daily Output (lbs)</h2>
+        <div class="chart-container"><canvas id="outputChart"></canvas></div>
+    </div>
+    <div class="card">
+        <h2>Yield Rate (%)</h2>
+        <div class="chart-container"><canvas id="yieldChart"></canvas></div>
+    </div>
+    <div class="card">
+        <h2>Daily Value ($)</h2>
+        <div class="chart-container"><canvas id="valueChart"></canvas></div>
+    </div>
+    <div class="card">
+        <h2>Output by Machine</h2>
+        <div class="chart-container"><canvas id="machineChart"></canvas></div>
+    </div>
+
+    <script>
+        let rawData = [];
+        let charts = {};
+
+        // --- CSV Parsing ---
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                const vals = lines[i].split(',');
+                if (vals.length < 10) continue;
+                const row = {};
+                headers.forEach((h, idx) => row[h] = (vals[idx] || '').trim());
+                rows.push(row);
+            }
+            return rows;
+        }
+
+        function parseRow(row) {
+            const dateParts = (row['Job Date'] || '').split(' ')[0].split('/');
+            const date = dateParts.length === 3
+                ? new Date(+dateParts[2], +dateParts[0] - 1, +dateParts[1])
+                : null;
+
+            const machine = (row['Machine'] || '').replace(/\s*\(\d+\w{2} SHIFT\)/i, '').trim();
+            const warehouse = (row['Warehouse'] || '').trim();
+            const status = (row['Warehouse Status'] || '').trim().toUpperCase();
+
+            return {
+                date,
+                dateStr: date ? date.toISOString().slice(0, 10) : '',
+                warehouse,
+                machine,
+                fullMachine: (row['Machine'] || '').trim(),
+                status,
+                outputQty: parseFloat(row['Output Qty']) || 0,
+                inputQty: parseFloat(row['Input Qty']) || 0,
+                yieldLoss: parseFloat(row['Yield Loss Qty']) || 0,
+                inputValue: parseFloat(row['Input Value']) || 0,
+                outputValue: parseFloat(row['Output Value']) || 0,
+                expenses: parseFloat(row['Expenses']) || 0
+            };
+        }
+
+        // --- Smoothing ---
+        function movingAvg(dataMap, windowDays) {
+            const dates = Object.keys(dataMap).sort();
+            if (windowDays <= 1) return dataMap;
+
+            const smoothed = {};
+            for (let i = 0; i < dates.length; i++) {
+                const endDate = new Date(dates[i]);
+                const startDate = new Date(endDate);
+                startDate.setDate(startDate.getDate() - windowDays + 1);
+
+                let sum = 0, count = 0;
+                for (let j = i; j >= 0; j--) {
+                    const d = new Date(dates[j]);
+                    if (d < startDate) break;
+                    sum += dataMap[dates[j]];
+                    count++;
+                }
+                smoothed[dates[i]] = count > 0 ? sum / count : 0;
+            }
+            return smoothed;
+        }
+
+        // --- Filtering ---
+        function getFiltered() {
+            const wh = document.getElementById('warehouseFilter').value;
+            const mach = document.getElementById('machineFilter').value;
+            const status = document.getElementById('statusFilter').value;
+
+            return rawData.filter(r => {
+                if (wh !== 'all' && r.warehouse !== wh) return false;
+                if (mach !== 'all' && r.machine !== mach) return false;
+                if (status === 'completed' && r.status !== 'COMPLETED') return false;
+                if (status === 'in_process' && r.status !== 'IN PROCESS') return false;
+                return r.date !== null;
+            });
+        }
+
+        // --- Populate Filters ---
+        function populateFilters() {
+            const warehouses = [...new Set(rawData.map(r => r.warehouse))].sort();
+            const machines = [...new Set(rawData.map(r => r.machine))].sort();
+
+            const whSel = document.getElementById('warehouseFilter');
+            whSel.innerHTML = '<option value="all">All Warehouses</option>';
+            warehouses.forEach(w => {
+                if (w) whSel.innerHTML += `<option value="${w}">${w}</option>`;
+            });
+
+            const machSel = document.getElementById('machineFilter');
+            machSel.innerHTML = '<option value="all">All Machines</option>';
+            machines.forEach(m => {
+                if (m) machSel.innerHTML += `<option value="${m}">${m}</option>`;
+            });
+        }
+
+        // --- KPIs ---
+        function renderKPIs(filtered) {
+            const totalOutput = filtered.reduce((s, r) => s + r.outputQty, 0);
+            const totalInput = filtered.reduce((s, r) => s + r.inputQty, 0);
+            const totalYieldLoss = filtered.reduce((s, r) => s + r.yieldLoss, 0);
+            const totalOutputValue = filtered.reduce((s, r) => s + r.outputValue, 0);
+            const totalInputValue = filtered.reduce((s, r) => s + r.inputValue, 0);
+            const totalExpenses = filtered.reduce((s, r) => s + r.expenses, 0);
+            const dates = [...new Set(filtered.map(r => r.dateStr))];
+            const numDays = dates.length || 1;
+            const yieldRate = totalInput > 0 ? ((totalInput - Math.abs(totalYieldLoss)) / totalInput * 100) : 0;
+
+            const fmt = (n) => n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+            const fmtD = (n) => '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+            document.getElementById('kpiGrid').innerHTML = `
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Output</div>
+                    <div class="kpi-value">${fmt(totalOutput)}</div>
+                    <div class="kpi-sub">lbs over ${numDays} days</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Avg Daily Output</div>
+                    <div class="kpi-value">${fmt(totalOutput / numDays)}</div>
+                    <div class="kpi-sub">lbs/day</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Yield Rate</div>
+                    <div class="kpi-value">${yieldRate.toFixed(1)}%</div>
+                    <div class="kpi-sub">input → output</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Output Value</div>
+                    <div class="kpi-value">${fmtD(totalOutputValue)}</div>
+                    <div class="kpi-sub">over ${numDays} days</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Net Value</div>
+                    <div class="kpi-value">${fmtD(totalOutputValue - totalInputValue)}</div>
+                    <div class="kpi-sub">output − input value</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Expenses</div>
+                    <div class="kpi-value">${fmtD(totalExpenses)}</div>
+                    <div class="kpi-sub">over ${numDays} days</div>
+                </div>
+            `;
+        }
+
+        // --- Charts ---
+        const COLORS = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
+
+        function isDark() {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        function chartColors() {
+            const dark = isDark();
+            return {
+                grid: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                text: dark ? '#95a5a6' : '#666'
+            };
+        }
+
+        function buildTimeChart(canvasId, dataMap, label, color, unit, decimals) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const cc = chartColors();
+
+            if (charts[canvasId]) charts[canvasId].destroy();
+
+            const dates = Object.keys(dataMap).sort();
+            const values = dates.map(d => dataMap[d]);
+
+            charts[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label,
+                        data: values,
+                        borderColor: color,
+                        backgroundColor: color + '20',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: dates.length > 40 ? 0 : 3,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'day', tooltipFormat: 'MMM d, yyyy' },
+                            grid: { color: cc.grid },
+                            ticks: { color: cc.text, maxTicksLimit: 15 }
+                        },
+                        y: {
+                            grid: { color: cc.grid },
+                            ticks: {
+                                color: cc.text,
+                                callback: v => unit === '$'
+                                    ? '$' + v.toLocaleString('en-US', { maximumFractionDigits: decimals })
+                                    : v.toLocaleString('en-US', { maximumFractionDigits: decimals }) + (unit || '')
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: cc.text } },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => {
+                                    const v = ctx.parsed.y;
+                                    return unit === '$'
+                                        ? `${ctx.dataset.label}: $${v.toLocaleString('en-US', { maximumFractionDigits: decimals })}`
+                                        : `${ctx.dataset.label}: ${v.toLocaleString('en-US', { maximumFractionDigits: decimals })}${unit || ''}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function buildMachineChart(filtered) {
+            const ctx = document.getElementById('machineChart').getContext('2d');
+            const cc = chartColors();
+
+            if (charts['machineChart']) charts['machineChart'].destroy();
+
+            const byMachine = {};
+            filtered.forEach(r => {
+                byMachine[r.machine] = (byMachine[r.machine] || 0) + r.outputQty;
+            });
+
+            const sorted = Object.entries(byMachine).sort((a, b) => b[1] - a[1]);
+            const labels = sorted.map(s => s[0]);
+            const values = sorted.map(s => s[1]);
+
+            charts['machineChart'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Total Output (lbs)',
+                        data: values,
+                        backgroundColor: labels.map((_, i) => COLORS[i % COLORS.length] + 'CC'),
+                        borderColor: labels.map((_, i) => COLORS[i % COLORS.length]),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            grid: { color: cc.grid },
+                            ticks: {
+                                color: cc.text,
+                                callback: v => v.toLocaleString('en-US', { maximumFractionDigits: 0 })
+                            }
+                        },
+                        y: {
+                            grid: { color: cc.grid },
+                            ticks: { color: cc.text, font: { size: 11 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.parsed.x.toLocaleString('en-US')} lbs`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Main Render ---
+        function render() {
+            const filtered = getFiltered();
+            const window = parseInt(document.getElementById('smoothing').value);
+
+            renderKPIs(filtered);
+
+            // Aggregate by date
+            const outputByDate = {};
+            const inputByDate = {};
+            const yieldLossByDate = {};
+            const valueByDate = {};
+
+            filtered.forEach(r => {
+                const d = r.dateStr;
+                outputByDate[d] = (outputByDate[d] || 0) + r.outputQty;
+                inputByDate[d] = (inputByDate[d] || 0) + r.inputQty;
+                yieldLossByDate[d] = (yieldLossByDate[d] || 0) + r.yieldLoss;
+                valueByDate[d] = (valueByDate[d] || 0) + r.outputValue;
+            });
+
+            // Yield rate by date
+            const yieldByDate = {};
+            for (const d of Object.keys(outputByDate)) {
+                const inp = inputByDate[d] || 0;
+                const loss = Math.abs(yieldLossByDate[d] || 0);
+                yieldByDate[d] = inp > 0 ? ((inp - loss) / inp * 100) : 100;
+            }
+
+            const smoothedOutput = movingAvg(outputByDate, window);
+            const smoothedYield = movingAvg(yieldByDate, window);
+            const smoothedValue = movingAvg(valueByDate, window);
+
+            const windowLabel = window === 1 ? '' : ` (${window}-day avg)`;
+
+            buildTimeChart('outputChart', smoothedOutput, `Output${windowLabel}`, '#3498db', ' lbs', 0);
+            buildTimeChart('yieldChart', smoothedYield, `Yield Rate${windowLabel}`, '#2ecc71', '%', 1);
+            buildTimeChart('valueChart', smoothedValue, `Output Value${windowLabel}`, '#f39c12', '$', 0);
+            buildMachineChart(filtered);
+        }
+
+        // --- CSV Load ---
+        function loadCSVText(text, name) {
+            const parsed = parseCSV(text);
+            rawData = parsed.map(parseRow);
+            document.getElementById('fileName').textContent = name || 'Loaded';
+            populateFilters();
+            render();
+        }
+
+        document.getElementById('csvFile').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => loadCSVText(reader.result, file.name);
+            reader.readAsText(file);
+        });
+
+        // Try loading default CSV
+        fetch('data.csv')
+            .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+            .then(text => loadCSVText(text, 'data.csv'))
+            .catch(() => {
+                document.getElementById('fileName').textContent = 'Upload a CSV to start';
+            });
+
+        // Re-render on filter/smoothing change
+        ['warehouseFilter', 'machineFilter', 'statusFilter', 'smoothing'].forEach(id => {
+            document.getElementById(id).addEventListener('change', render);
+        });
+
+        // React to dark mode changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+    </script>
+</body>
+</html>
