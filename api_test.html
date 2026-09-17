@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cieTrade API Test</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+        h1 { margin-bottom: 20px; }
+        .field { margin-bottom: 12px; }
+        .field label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 14px; }
+        .field input, .field select { padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 100%; max-width: 400px; }
+        button { padding: 10px 24px; background: #3498db; color: #fff; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        button:disabled { background: #95a5a6; }
+        #status { margin-top: 16px; padding: 12px; border-radius: 6px; font-size: 14px; display: none; }
+        .success { background: #d5f5e3; color: #1e8449; }
+        .error { background: #fadbd8; color: #c0392b; }
+        .loading { background: #d6eaf8; color: #2471a3; }
+        #output { margin-top: 20px; }
+        pre { background: #f4f4f4; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 12px; max-height: 500px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>cieTrade API Test</h1>
+    <p>Simple test to verify the ListConvertingJobs endpoint works.</p>
+
+    <div class="field">
+        <label>API Key (Bearer Token)</label>
+        <input type="text" id="apiKey" value="9022012646288844ae3efb538fd1d0753053161b0d406d5268">
+    </div>
+    <div class="field">
+        <label>UserID (your cieTrade email)</label>
+        <input type="text" id="userId" placeholder="you@example.com">
+    </div>
+    <div class="field">
+        <label>Quick Test</label>
+        <select id="testType">
+            <option value="recent">Last 7 days (all statuses)</option>
+            <option value="inprocess">Current IN PROCESS jobs</option>
+            <option value="single">Single job by number</option>
+        </select>
+    </div>
+    <div class="field" id="jobNoField" style="display:none;">
+        <label>Job Number</label>
+        <input type="text" id="jobNo" placeholder="e.g. 17040">
+    </div>
+
+    <button id="testBtn" onclick="runTest()">Test API Call</button>
+
+    <div id="status"></div>
+    <div id="output"></div>
+
+    <script>
+        document.getElementById('testType').addEventListener('change', function() {
+            document.getElementById('jobNoField').style.display = this.value === 'single' ? 'block' : 'none';
+        });
+
+        async function runTest() {
+            const key = document.getElementById('apiKey').value.trim();
+            const user = document.getElementById('userId').value.trim();
+            const testType = document.getElementById('testType').value;
+
+            if (!key || !user) {
+                showStatus('Please enter both API key and UserID.', 'error');
+                return;
+            }
+
+            let url = 'https://api.cietrade.net/ListConvertingJobs?UserID=' + encodeURIComponent(user);
+
+            if (testType === 'recent') {
+                const today = new Date();
+                const weekAgo = new Date(today);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                url += '&DateFrom=' + formatDate(weekAgo) + '&DateTo=' + formatDate(today);
+            } else if (testType === 'inprocess') {
+                url += '&WarehouseStatus=' + encodeURIComponent('IN PROCESS');
+            } else if (testType === 'single') {
+                const jobNo = document.getElementById('jobNo').value.trim();
+                if (!jobNo) { showStatus('Enter a job number.', 'error'); return; }
+                url += '&JobNo=' + encodeURIComponent(jobNo);
+            }
+
+            const btn = document.getElementById('testBtn');
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            showStatus('Calling: ' + url.replace(key, '***'), 'loading');
+            document.getElementById('output').innerHTML = '';
+
+            try {
+                const resp = await fetch(url, {
+                    headers: {
+                        'Authorization': 'Bearer ' + key,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const status = resp.status;
+                const text = await resp.text();
+
+                let parsed;
+                try { parsed = JSON.parse(text); } catch (e) { parsed = null; }
+
+                if (status !== 200) {
+                    showStatus('HTTP ' + status + ' — ' + (status === 404 ? 'Endpoint not found on server.' : 'Unexpected status.'), 'error');
+                    document.getElementById('output').innerHTML = '<pre>' + escapeHtml(text.substring(0, 2000)) + '</pre>';
+                    return;
+                }
+
+                if (parsed && parsed.length === 1 && parsed[0].ERROR) {
+                    showStatus('API returned error: ' + parsed[0].ERROR, 'error');
+                    document.getElementById('output').innerHTML = '<pre>' + escapeHtml(JSON.stringify(parsed, null, 2)) + '</pre>';
+                    return;
+                }
+
+                if (Array.isArray(parsed)) {
+                    showStatus('SUCCESS — Got ' + parsed.length + ' job(s).', 'success');
+                    const preview = parsed.slice(0, 5);
+                    document.getElementById('output').innerHTML =
+                        '<p style="font-size:13px;color:#666;">Showing first ' + Math.min(5, parsed.length) + ' of ' + parsed.length + ':</p>' +
+                        '<pre>' + escapeHtml(JSON.stringify(preview, null, 2)) + '</pre>';
+                } else {
+                    showStatus('Got a response but it was not a JSON array.', 'error');
+                    document.getElementById('output').innerHTML = '<pre>' + escapeHtml(text.substring(0, 2000)) + '</pre>';
+                }
+
+            } catch (err) {
+                let msg = err.message;
+                if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Load failed')) {
+                    msg = 'Network error — likely a CORS issue. The cieTrade API server may not allow requests from this domain (' + location.origin + '). Try opening this file locally (file://) or ask cieTrade to whitelist your domain.';
+                }
+                showStatus('Error: ' + msg, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Test API Call';
+            }
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('status');
+            el.className = type;
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        function formatDate(d) {
+            return (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+    </script>
+</body>
+</html>
