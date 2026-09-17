@@ -16,29 +16,50 @@
             background: #f5f7fa;
             color: #333;
         }
-        h1 {
-            text-align: center;
-            margin-bottom: 8px;
-            color: #2c3e50;
-        }
-        .subtitle {
-            text-align: center;
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-bottom: 24px;
-        }
-        .nav-link {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .nav-link a {
-            color: #3498db;
-            text-decoration: none;
-            font-size: 14px;
-        }
+        h1 { text-align: center; margin-bottom: 8px; color: #2c3e50; }
+        .subtitle { text-align: center; font-size: 14px; color: #7f8c8d; margin-bottom: 24px; }
+        .nav-link { text-align: center; margin-bottom: 20px; }
+        .nav-link a { color: #3498db; text-decoration: none; font-size: 14px; }
         .nav-link a:hover { text-decoration: underline; }
 
-        /* Controls */
+        /* Tabs */
+        .tab-bar {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 20px;
+        }
+        .tab-bar button {
+            padding: 10px 24px;
+            font-size: 14px;
+            border: 2px solid #3498db;
+            background: #fff;
+            color: #3498db;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .tab-bar button:first-child { border-radius: 8px 0 0 8px; }
+        .tab-bar button:last-child { border-radius: 0 8px 8px 0; }
+        .tab-bar button.active { background: #3498db; color: #fff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Card & controls */
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
         .controls {
             display: flex;
             flex-wrap: wrap;
@@ -63,14 +84,15 @@
             letter-spacing: 0.5px;
         }
         .control-group select,
-        .control-group input {
+        .control-group input[type="text"],
+        .control-group input[type="date"],
+        .control-group input[type="password"] {
             padding: 8px 10px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 13px;
             background: #f9f9f9;
             color: #555;
-            cursor: pointer;
         }
         .control-group select:focus,
         .control-group input:focus {
@@ -78,33 +100,59 @@
             border-color: #3498db;
             box-shadow: 0 0 0 2px rgba(52,152,219,0.15);
         }
-        .file-upload {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .file-upload label.btn {
-            padding: 8px 16px;
-            background: #3498db;
-            color: #fff;
+
+        /* Buttons */
+        .btn {
+            padding: 8px 18px;
+            border: none;
             border-radius: 6px;
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
         }
-        .file-upload label.btn:hover { background: #2980b9; }
+        .btn-primary { background: #3498db; color: #fff; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-primary:disabled { background: #95a5a6; cursor: not-allowed; }
+        .btn-secondary { background: #ecf0f1; color: #555; border: 1px solid #ddd; }
+        .btn-secondary:hover { background: #dfe6e9; }
+        .btn-danger { background: #e74c3c; color: #fff; }
+        .btn-danger:hover { background: #c0392b; }
+
+        .file-upload { display: flex; align-items: center; gap: 10px; }
+        .file-upload label.btn { display: inline-block; }
         .file-upload input[type="file"] { display: none; }
-        .file-name {
-            font-size: 12px;
-            color: #7f8c8d;
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        .file-name { font-size: 12px; color: #7f8c8d; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* API Settings */
+        .api-settings {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 16px;
+        }
+        .api-settings .control-group { flex: 1; min-width: 200px; }
+        .api-status {
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .api-status.success { background: #d5f5e3; color: #1e8449; }
+        .api-status.error { background: #fadbd8; color: #c0392b; }
+        .api-status.loading { background: #d6eaf8; color: #2471a3; }
+        .api-status.info { background: #fef9e7; color: #9a7d0a; }
+
+        /* Fetch controls */
+        .fetch-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: end;
         }
 
-        /* KPI Cards */
+        /* KPI cards */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -118,44 +166,41 @@
             padding: 16px;
             text-align: center;
         }
-        .kpi-card .kpi-label {
-            font-size: 12px;
-            color: #7f8c8d;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-        .kpi-card .kpi-value {
-            font-size: 26px;
-            font-weight: 700;
-            color: #2c3e50;
-        }
-        .kpi-card .kpi-sub {
-            font-size: 11px;
-            color: #95a5a6;
-            margin-top: 4px;
-        }
+        .kpi-card .kpi-label { font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .kpi-card .kpi-value { font-size: 26px; font-weight: 700; color: #2c3e50; }
+        .kpi-card .kpi-sub { font-size: 11px; color: #95a5a6; margin-top: 4px; }
 
         /* Charts */
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            padding: 24px;
-            margin-bottom: 20px;
-        }
-        .card h2 {
-            font-size: 16px;
-            color: #7f8c8d;
-            margin-bottom: 16px;
+        .chart-container { position: relative; width: 100%; height: 350px; }
+
+        /* Job tracker table */
+        .tracker-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+        .tracker-table th {
+            background: #f2f2f2;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 12px;
+            color: #555;
+            border-bottom: 2px solid #ddd;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
-        .chart-container {
-            position: relative;
-            width: 100%;
-            height: 350px;
+        .tracker-table td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+        .tracker-table tr:hover { background: #f8f9fa; }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
         }
+        .badge-new { background: #d5f5e3; color: #1e8449; }
+        .badge-completed { background: #d6eaf8; color: #2471a3; }
+        .badge-unchanged { background: #f2f3f4; color: #7f8c8d; }
+        .badge-process { background: #fef9e7; color: #9a7d0a; }
+
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #95a5a6; font-size: 14px; }
 
         /* Dark mode */
         @media (prefers-color-scheme: dark) {
@@ -163,52 +208,114 @@
             h1 { color: #e0e0e0; }
             .subtitle { color: #95a5a6; }
             .nav-link a { color: #5dade2; }
-            .controls {
-                background: #16213e;
-                box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-            }
-            .control-group select,
-            .control-group input {
-                background: #0f3460;
-                border-color: #2c3e6d;
-                color: #e0e0e0;
-            }
-            .kpi-card {
-                background: #16213e;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            }
-            .kpi-card .kpi-value { color: #e0e0e0; }
-            .card {
-                background: #16213e;
-                box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-            }
+            .tab-bar button { background: #16213e; border-color: #3498db; color: #5dade2; }
+            .tab-bar button.active { background: #3498db; color: #fff; }
+            .controls, .card { background: #16213e; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
             .card h2 { color: #95a5a6; }
+            .control-group select,
+            .control-group input[type="text"],
+            .control-group input[type="date"],
+            .control-group input[type="password"] {
+                background: #0f3460; border-color: #2c3e6d; color: #e0e0e0;
+            }
+            .kpi-card { background: #16213e; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+            .kpi-card .kpi-value { color: #e0e0e0; }
+            .btn-secondary { background: #0f3460; color: #e0e0e0; border-color: #2c3e6d; }
+            .tracker-table th { background: #0f3460; color: #95a5a6; border-bottom-color: #2c3e6d; }
+            .tracker-table td { border-bottom-color: #1a2744; color: #ccc; }
+            .tracker-table tr:hover { background: #0f3460; }
+            .api-status.info { background: #2c3e50; color: #f1c40f; }
         }
 
         /* Responsive */
         @media (max-width: 600px) {
             body { padding: 12px; }
             h1 { font-size: 22px; }
-            .controls { padding: 14px; gap: 10px; }
+            .controls, .card { padding: 14px; }
             .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
             .kpi-card .kpi-value { font-size: 20px; }
             .chart-container { height: 260px; }
-            .card { padding: 16px; }
+            .api-settings .control-group { min-width: 100%; }
         }
     </style>
 </head>
 <body>
     <h1>Converting Job Dashboard</h1>
     <p class="subtitle">Production throughput, yield, and value analysis</p>
-    <div class="nav-link"><a href="price_calculator.html">← Price Calculator</a></div>
+    <div class="nav-link"><a href="price_calculator.html">&larr; Price Calculator</a></div>
 
-    <!-- Controls -->
-    <div class="controls">
-        <div class="control-group file-upload">
-            <label class="btn" for="csvFile">Load CSV</label>
-            <input type="file" id="csvFile" accept=".csv">
-            <span class="file-name" id="fileName">No file loaded</span>
+    <!-- Data Source Tabs -->
+    <div class="tab-bar">
+        <button id="tabCsv" class="active" onclick="switchTab('csv')">CSV Upload</button>
+        <button id="tabApi" onclick="switchTab('api')">Live API</button>
+    </div>
+
+    <!-- CSV Tab -->
+    <div class="tab-content active" id="csvTab">
+        <div class="controls">
+            <div class="control-group file-upload">
+                <label class="btn btn-primary" for="csvFile">Load CSV</label>
+                <input type="file" id="csvFile" accept=".csv">
+                <span class="file-name" id="fileName">No file loaded</span>
+            </div>
         </div>
+    </div>
+
+    <!-- API Tab -->
+    <div class="tab-content" id="apiTab">
+        <div class="card">
+            <h2>API Connection</h2>
+            <div class="api-settings">
+                <div class="control-group">
+                    <label for="apiKey">API Key</label>
+                    <input type="password" id="apiKey" placeholder="Bearer token from cieTrade">
+                </div>
+                <div class="control-group">
+                    <label for="apiUser">UserID (Email)</label>
+                    <input type="text" id="apiUser" placeholder="user@example.com">
+                </div>
+                <div class="control-group">
+                    <button class="btn btn-secondary" onclick="saveApiCredentials()">Save Credentials</button>
+                </div>
+            </div>
+            <div id="apiStatus"></div>
+
+            <h2 style="margin-top:16px;">Fetch Data</h2>
+            <div class="fetch-controls">
+                <div class="control-group">
+                    <label for="apiDateFrom">Date From</label>
+                    <input type="date" id="apiDateFrom">
+                </div>
+                <div class="control-group">
+                    <label for="apiDateTo">Date To</label>
+                    <input type="date" id="apiDateTo">
+                </div>
+                <div class="control-group">
+                    <label for="apiWarehouseStatus">Warehouse Status</label>
+                    <select id="apiWarehouseStatus">
+                        <option value="">All</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="IN PROCESS">In Process</option>
+                        <option value="SCHEDULED">Scheduled</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="apiAccountingStatus">Accounting Status</label>
+                    <select id="apiAccountingStatus">
+                        <option value="ALL">All</option>
+                        <option value="POSTED">Posted</option>
+                        <option value="WORK">Work (Unposted)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button class="btn btn-primary" id="fetchBtn" onclick="fetchFromApi()">Fetch Jobs</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared Filters -->
+    <div class="controls" id="filterControls" style="display:none;">
         <div class="control-group">
             <label for="warehouseFilter">Warehouse</label>
             <select id="warehouseFilter"><option value="all">All Warehouses</option></select>
@@ -238,29 +345,43 @@
     <!-- KPIs -->
     <div class="kpi-grid" id="kpiGrid"></div>
 
+    <!-- IN PROCESS Tracker -->
+    <div class="card" id="trackerCard" style="display:none;">
+        <h2>In-Process Job Tracker</h2>
+        <p style="font-size:13px;color:#7f8c8d;margin-bottom:12px;">
+            Compares current data against the previous fetch to show which jobs changed status.
+            <span id="trackerTimestamp"></span>
+        </p>
+        <div class="table-scroll" id="trackerBody"></div>
+    </div>
+
     <!-- Charts -->
-    <div class="card">
-        <h2>Daily Output (lbs)</h2>
-        <div class="chart-container"><canvas id="outputChart"></canvas></div>
-    </div>
-    <div class="card">
-        <h2>Yield Rate (%)</h2>
-        <div class="chart-container"><canvas id="yieldChart"></canvas></div>
-    </div>
-    <div class="card">
-        <h2>Daily Value ($)</h2>
-        <div class="chart-container"><canvas id="valueChart"></canvas></div>
-    </div>
-    <div class="card">
-        <h2>Output by Machine</h2>
-        <div class="chart-container"><canvas id="machineChart"></canvas></div>
+    <div id="chartsSection" style="display:none;">
+        <div class="card">
+            <h2>Daily Output (lbs)</h2>
+            <div class="chart-container"><canvas id="outputChart"></canvas></div>
+        </div>
+        <div class="card">
+            <h2>Yield Rate (%)</h2>
+            <div class="chart-container"><canvas id="yieldChart"></canvas></div>
+        </div>
+        <div class="card">
+            <h2>Daily Value ($)</h2>
+            <div class="chart-container"><canvas id="valueChart"></canvas></div>
+        </div>
+        <div class="card">
+            <h2>Output by Machine</h2>
+            <div class="chart-container"><canvas id="machineChart"></canvas></div>
+        </div>
     </div>
 
     <script>
         let rawData = [];
         let charts = {};
 
-        // --- CSV Parsing ---
+        // ==================== DATA PARSING ====================
+
+        // Parse CSV text (from file upload or data.csv)
         function parseCSV(text) {
             const lines = text.trim().split('\n');
             const headers = lines[0].split(',').map(h => h.trim());
@@ -275,23 +396,21 @@
             return rows;
         }
 
-        function parseRow(row) {
+        function parseCSVRow(row) {
             const dateParts = (row['Job Date'] || '').split(' ')[0].split('/');
             const date = dateParts.length === 3
                 ? new Date(+dateParts[2], +dateParts[0] - 1, +dateParts[1])
                 : null;
-
             const machine = (row['Machine'] || '').replace(/\s*\(\d+\w{2} SHIFT\)/i, '').trim();
-            const warehouse = (row['Warehouse'] || '').trim();
-            const status = (row['Warehouse Status'] || '').trim().toUpperCase();
-
             return {
+                jobNo: (row['Job No'] || '').trim(),
                 date,
                 dateStr: date ? date.toISOString().slice(0, 10) : '',
-                warehouse,
+                warehouse: (row['Warehouse'] || '').trim(),
                 machine,
                 fullMachine: (row['Machine'] || '').trim(),
-                status,
+                status: (row['Warehouse Status'] || '').trim().toUpperCase(),
+                accountingStatus: (row['Status'] || '').trim(),
                 outputQty: parseFloat(row['Output Qty']) || 0,
                 inputQty: parseFloat(row['Input Qty']) || 0,
                 yieldLoss: parseFloat(row['Yield Loss Qty']) || 0,
@@ -301,17 +420,286 @@
             };
         }
 
-        // --- Smoothing ---
+        // Parse API JSON response
+        function parseAPIRow(row) {
+            const dateStr = (row.JobDate || '').split('T')[0];
+            const date = dateStr ? new Date(dateStr + 'T00:00:00') : null;
+            const machine = (row.Machine || '').replace(/\s*\(\d+\w{2} SHIFT\)/i, '').trim();
+            const parseQty = v => {
+                if (v == null) return 0;
+                if (typeof v === 'number') return v;
+                return parseFloat(String(v).replace(/,/g, '')) || 0;
+            };
+            return {
+                jobNo: String(row.JobNo || ''),
+                date,
+                dateStr: date ? date.toISOString().slice(0, 10) : '',
+                warehouse: (row.Warehouse || '').trim(),
+                machine,
+                fullMachine: (row.Machine || '').trim(),
+                status: (row.WarehouseStatus || '').trim().toUpperCase(),
+                accountingStatus: (row.Status || '').trim(),
+                outputQty: parseQty(row.OutputQty),
+                inputQty: parseQty(row.InputQty),
+                yieldLoss: parseQty(row.YieldLossQty),
+                inputValue: row.InputValue || 0,
+                outputValue: row.OutputValue || 0,
+                expenses: row.Expenses || 0
+            };
+        }
+
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tab) {
+            document.getElementById('tabCsv').classList.toggle('active', tab === 'csv');
+            document.getElementById('tabApi').classList.toggle('active', tab === 'api');
+            document.getElementById('csvTab').classList.toggle('active', tab === 'csv');
+            document.getElementById('apiTab').classList.toggle('active', tab === 'api');
+        }
+
+        // ==================== API CREDENTIALS ====================
+        const CRED_KEY = 'cietradeApiCreds';
+
+        function saveApiCredentials() {
+            const key = document.getElementById('apiKey').value.trim();
+            const user = document.getElementById('apiUser').value.trim();
+            if (!key || !user) {
+                showApiStatus('Please enter both API key and UserID.', 'error');
+                return;
+            }
+            try {
+                localStorage.setItem(CRED_KEY, JSON.stringify({ key, user }));
+            } catch (e) {}
+            showApiStatus('Credentials saved to browser storage.', 'success');
+        }
+
+        function loadApiCredentials() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(CRED_KEY));
+                if (saved) {
+                    document.getElementById('apiKey').value = saved.key || '';
+                    document.getElementById('apiUser').value = saved.user || '';
+                }
+            } catch (e) {}
+        }
+
+        function showApiStatus(msg, type) {
+            const el = document.getElementById('apiStatus');
+            el.className = 'api-status ' + type;
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        // ==================== API FETCH ====================
+        async function fetchFromApi() {
+            const key = document.getElementById('apiKey').value.trim();
+            const user = document.getElementById('apiUser').value.trim();
+            if (!key || !user) {
+                showApiStatus('Enter API key and UserID first.', 'error');
+                return;
+            }
+
+            const dateFrom = document.getElementById('apiDateFrom').value;
+            const dateTo = document.getElementById('apiDateTo').value;
+            const whStatus = document.getElementById('apiWarehouseStatus').value;
+            const acctStatus = document.getElementById('apiAccountingStatus').value;
+
+            let url = 'https://api.cietrade.net/ListConvertingJobs?UserID=' + encodeURIComponent(user);
+            if (dateFrom) url += '&DateFrom=' + encodeURIComponent(dateFrom);
+            if (dateTo) url += '&DateTo=' + encodeURIComponent(dateTo);
+            if (whStatus) url += '&WarehouseStatus=' + encodeURIComponent(whStatus);
+            if (acctStatus && acctStatus !== 'ALL') url += '&Status=' + encodeURIComponent(acctStatus);
+
+            const fetchBtn = document.getElementById('fetchBtn');
+            fetchBtn.disabled = true;
+            fetchBtn.textContent = 'Fetching...';
+            showApiStatus('Fetching data from cieTrade...', 'loading');
+
+            try {
+                const resp = await fetch(url, {
+                    headers: {
+                        'Authorization': 'Bearer ' + key,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!resp.ok) {
+                    throw new Error('HTTP ' + resp.status + (resp.status === 404 ? ' — endpoint not found' : ''));
+                }
+
+                const json = await resp.json();
+
+                if (json.length === 1 && json[0].ERROR) {
+                    throw new Error(json[0].ERROR);
+                }
+
+                showApiStatus('Loaded ' + json.length + ' jobs from cieTrade API.', 'success');
+
+                // Snapshot previous IN PROCESS jobs before loading new data
+                snapshotInProcess();
+
+                rawData = json.map(parseAPIRow);
+                onDataLoaded('cieTrade API');
+                updateTracker();
+
+            } catch (err) {
+                let msg = err.message;
+                if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+                    msg += ' — This may be a CORS issue. The cieTrade API may need to allow requests from this domain.';
+                }
+                showApiStatus('Error: ' + msg, 'error');
+            } finally {
+                fetchBtn.disabled = false;
+                fetchBtn.textContent = 'Fetch Jobs';
+            }
+        }
+
+        // ==================== IN-PROCESS TRACKER ====================
+        const SNAPSHOT_KEY = 'cietradeSnapshot';
+
+        function snapshotInProcess() {
+            if (rawData.length === 0) return;
+            const inProcess = rawData.filter(r => r.status === 'IN PROCESS');
+            const snapshot = {
+                timestamp: new Date().toISOString(),
+                jobs: inProcess.map(r => ({
+                    jobNo: r.jobNo,
+                    machine: r.fullMachine,
+                    warehouse: r.warehouse,
+                    outputQty: r.outputQty,
+                    dateStr: r.dateStr
+                }))
+            };
+            try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snapshot)); } catch (e) {}
+        }
+
+        function updateTracker() {
+            const card = document.getElementById('trackerCard');
+            const body = document.getElementById('trackerBody');
+            const tsEl = document.getElementById('trackerTimestamp');
+
+            let prev;
+            try { prev = JSON.parse(localStorage.getItem(SNAPSHOT_KEY)); } catch (e) {}
+
+            if (!prev || prev.jobs.length === 0) {
+                card.style.display = 'block';
+                body.innerHTML = '<div class="empty-state">No previous snapshot to compare against. Fetch again later to see changes.</div>';
+                tsEl.textContent = '';
+                return;
+            }
+
+            const prevDate = new Date(prev.timestamp);
+            tsEl.textContent = 'Previous fetch: ' + prevDate.toLocaleString();
+
+            const prevMap = {};
+            prev.jobs.forEach(j => prevMap[j.jobNo] = j);
+
+            const currentMap = {};
+            rawData.forEach(r => currentMap[r.jobNo] = r);
+
+            const rows = [];
+
+            // Check each previously IN PROCESS job
+            for (const job of prev.jobs) {
+                const current = currentMap[job.jobNo];
+                if (!current) {
+                    rows.push({ ...job, change: 'not-found', currentStatus: 'Not in current data' });
+                } else if (current.status === 'COMPLETED') {
+                    rows.push({
+                        ...job,
+                        change: 'completed',
+                        currentStatus: 'COMPLETED',
+                        currentOutput: current.outputQty,
+                        outputValue: current.outputValue
+                    });
+                } else if (current.status === 'IN PROCESS') {
+                    const qtyChanged = current.outputQty !== job.outputQty;
+                    rows.push({
+                        ...job,
+                        change: qtyChanged ? 'updated' : 'unchanged',
+                        currentStatus: 'IN PROCESS',
+                        currentOutput: current.outputQty
+                    });
+                } else {
+                    rows.push({ ...job, change: 'other', currentStatus: current.status });
+                }
+            }
+
+            // New IN PROCESS jobs not in previous snapshot
+            const currentInProcess = rawData.filter(r => r.status === 'IN PROCESS');
+            for (const r of currentInProcess) {
+                if (!prevMap[r.jobNo]) {
+                    rows.push({
+                        jobNo: r.jobNo,
+                        machine: r.fullMachine,
+                        warehouse: r.warehouse,
+                        outputQty: r.outputQty,
+                        dateStr: r.dateStr,
+                        change: 'new',
+                        currentStatus: 'IN PROCESS (new)',
+                        currentOutput: r.outputQty
+                    });
+                }
+            }
+
+            if (rows.length === 0) {
+                card.style.display = 'block';
+                body.innerHTML = '<div class="empty-state">No IN PROCESS jobs found in either snapshot.</div>';
+                return;
+            }
+
+            const badgeClass = {
+                'completed': 'badge-completed',
+                'new': 'badge-new',
+                'unchanged': 'badge-unchanged',
+                'updated': 'badge-process',
+                'not-found': 'badge-unchanged',
+                'other': 'badge-unchanged'
+            };
+            const badgeLabel = {
+                'completed': 'Completed',
+                'new': 'New',
+                'unchanged': 'Unchanged',
+                'updated': 'Updated',
+                'not-found': 'Missing',
+                'other': 'Changed'
+            };
+
+            let html = `<table class="tracker-table">
+                <thead><tr>
+                    <th>Job #</th><th>Date</th><th>Machine</th><th>Warehouse</th>
+                    <th>Prev Output</th><th>Current Output</th><th>Status</th>
+                </tr></thead><tbody>`;
+
+            for (const r of rows) {
+                const bc = badgeClass[r.change] || 'badge-unchanged';
+                const bl = badgeLabel[r.change] || r.change;
+                const fmt = n => n != null ? n.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '--';
+                html += `<tr>
+                    <td>${r.jobNo}</td>
+                    <td>${r.dateStr}</td>
+                    <td>${r.machine}</td>
+                    <td>${r.warehouse}</td>
+                    <td>${fmt(r.outputQty)}</td>
+                    <td>${r.currentOutput != null ? fmt(r.currentOutput) : '--'}</td>
+                    <td><span class="badge ${bc}">${bl}</span></td>
+                </tr>`;
+            }
+
+            html += '</tbody></table>';
+            card.style.display = 'block';
+            body.innerHTML = html;
+        }
+
+        // ==================== SMOOTHING & CHARTS ====================
+
         function movingAvg(dataMap, windowDays) {
             const dates = Object.keys(dataMap).sort();
             if (windowDays <= 1) return dataMap;
-
             const smoothed = {};
             for (let i = 0; i < dates.length; i++) {
                 const endDate = new Date(dates[i]);
                 const startDate = new Date(endDate);
                 startDate.setDate(startDate.getDate() - windowDays + 1);
-
                 let sum = 0, count = 0;
                 for (let j = i; j >= 0; j--) {
                     const d = new Date(dates[j]);
@@ -324,12 +712,10 @@
             return smoothed;
         }
 
-        // --- Filtering ---
         function getFiltered() {
             const wh = document.getElementById('warehouseFilter').value;
             const mach = document.getElementById('machineFilter').value;
             const status = document.getElementById('statusFilter').value;
-
             return rawData.filter(r => {
                 if (wh !== 'all' && r.warehouse !== wh) return false;
                 if (mach !== 'all' && r.machine !== mach) return false;
@@ -339,25 +725,17 @@
             });
         }
 
-        // --- Populate Filters ---
         function populateFilters() {
             const warehouses = [...new Set(rawData.map(r => r.warehouse))].sort();
             const machines = [...new Set(rawData.map(r => r.machine))].sort();
-
             const whSel = document.getElementById('warehouseFilter');
             whSel.innerHTML = '<option value="all">All Warehouses</option>';
-            warehouses.forEach(w => {
-                if (w) whSel.innerHTML += `<option value="${w}">${w}</option>`;
-            });
-
+            warehouses.forEach(w => { if (w) whSel.innerHTML += `<option value="${w}">${w}</option>`; });
             const machSel = document.getElementById('machineFilter');
             machSel.innerHTML = '<option value="all">All Machines</option>';
-            machines.forEach(m => {
-                if (m) machSel.innerHTML += `<option value="${m}">${m}</option>`;
-            });
+            machines.forEach(m => { if (m) machSel.innerHTML += `<option value="${m}">${m}</option>`; });
         }
 
-        // --- KPIs ---
         function renderKPIs(filtered) {
             const totalOutput = filtered.reduce((s, r) => s + r.outputQty, 0);
             const totalInput = filtered.reduce((s, r) => s + r.inputQty, 0);
@@ -368,117 +746,43 @@
             const dates = [...new Set(filtered.map(r => r.dateStr))];
             const numDays = dates.length || 1;
             const yieldRate = totalInput > 0 ? ((totalInput - Math.abs(totalYieldLoss)) / totalInput * 100) : 0;
-
-            const fmt = (n) => n.toLocaleString('en-US', { maximumFractionDigits: 0 });
-            const fmtD = (n) => '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+            const fmt = n => n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+            const fmtD = n => '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
 
             document.getElementById('kpiGrid').innerHTML = `
-                <div class="kpi-card">
-                    <div class="kpi-label">Total Output</div>
-                    <div class="kpi-value">${fmt(totalOutput)}</div>
-                    <div class="kpi-sub">lbs over ${numDays} days</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">Avg Daily Output</div>
-                    <div class="kpi-value">${fmt(totalOutput / numDays)}</div>
-                    <div class="kpi-sub">lbs/day</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">Yield Rate</div>
-                    <div class="kpi-value">${yieldRate.toFixed(1)}%</div>
-                    <div class="kpi-sub">input → output</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">Total Output Value</div>
-                    <div class="kpi-value">${fmtD(totalOutputValue)}</div>
-                    <div class="kpi-sub">over ${numDays} days</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">Net Value</div>
-                    <div class="kpi-value">${fmtD(totalOutputValue - totalInputValue)}</div>
-                    <div class="kpi-sub">output − input value</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">Total Expenses</div>
-                    <div class="kpi-value">${fmtD(totalExpenses)}</div>
-                    <div class="kpi-sub">over ${numDays} days</div>
-                </div>
+                <div class="kpi-card"><div class="kpi-label">Total Output</div><div class="kpi-value">${fmt(totalOutput)}</div><div class="kpi-sub">lbs over ${numDays} days</div></div>
+                <div class="kpi-card"><div class="kpi-label">Avg Daily Output</div><div class="kpi-value">${fmt(totalOutput / numDays)}</div><div class="kpi-sub">lbs/day</div></div>
+                <div class="kpi-card"><div class="kpi-label">Yield Rate</div><div class="kpi-value">${yieldRate.toFixed(1)}%</div><div class="kpi-sub">input &rarr; output</div></div>
+                <div class="kpi-card"><div class="kpi-label">Total Output Value</div><div class="kpi-value">${fmtD(totalOutputValue)}</div><div class="kpi-sub">over ${numDays} days</div></div>
+                <div class="kpi-card"><div class="kpi-label">Net Value</div><div class="kpi-value">${fmtD(totalOutputValue - totalInputValue)}</div><div class="kpi-sub">output &minus; input value</div></div>
+                <div class="kpi-card"><div class="kpi-label">Total Expenses</div><div class="kpi-value">${fmtD(totalExpenses)}</div><div class="kpi-sub">over ${numDays} days</div></div>
             `;
         }
 
-        // --- Charts ---
         const COLORS = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
-
-        function isDark() {
-            return window.matchMedia('(prefers-color-scheme: dark)').matches;
-        }
-
+        function isDark() { return window.matchMedia('(prefers-color-scheme: dark)').matches; }
         function chartColors() {
             const dark = isDark();
-            return {
-                grid: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                text: dark ? '#95a5a6' : '#666'
-            };
+            return { grid: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', text: dark ? '#95a5a6' : '#666' };
         }
 
         function buildTimeChart(canvasId, dataMap, label, color, unit, decimals) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             const cc = chartColors();
-
             if (charts[canvasId]) charts[canvasId].destroy();
-
             const dates = Object.keys(dataMap).sort();
             const values = dates.map(d => dataMap[d]);
-
             charts[canvasId] = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label,
-                        data: values,
-                        borderColor: color,
-                        backgroundColor: color + '20',
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: dates.length > 40 ? 0 : 3,
-                        borderWidth: 2
-                    }]
-                },
+                data: { labels: dates, datasets: [{ label, data: values, borderColor: color, backgroundColor: color + '20', fill: true, tension: 0.3, pointRadius: dates.length > 40 ? 0 : 3, borderWidth: 2 }] },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
                     scales: {
-                        x: {
-                            type: 'time',
-                            time: { unit: 'day', tooltipFormat: 'MMM d, yyyy' },
-                            grid: { color: cc.grid },
-                            ticks: { color: cc.text, maxTicksLimit: 15 }
-                        },
-                        y: {
-                            grid: { color: cc.grid },
-                            ticks: {
-                                color: cc.text,
-                                callback: v => unit === '$'
-                                    ? '$' + v.toLocaleString('en-US', { maximumFractionDigits: decimals })
-                                    : v.toLocaleString('en-US', { maximumFractionDigits: decimals }) + (unit || '')
-                            }
-                        }
+                        x: { type: 'time', time: { unit: 'day', tooltipFormat: 'MMM d, yyyy' }, grid: { color: cc.grid }, ticks: { color: cc.text, maxTicksLimit: 15 } },
+                        y: { grid: { color: cc.grid }, ticks: { color: cc.text, callback: v => unit === '$' ? '$' + v.toLocaleString('en-US', { maximumFractionDigits: decimals }) : v.toLocaleString('en-US', { maximumFractionDigits: decimals }) + (unit || '') } }
                     },
-                    plugins: {
-                        legend: { labels: { color: cc.text } },
-                        tooltip: {
-                            callbacks: {
-                                label: ctx => {
-                                    const v = ctx.parsed.y;
-                                    return unit === '$'
-                                        ? `${ctx.dataset.label}: $${v.toLocaleString('en-US', { maximumFractionDigits: decimals })}`
-                                        : `${ctx.dataset.label}: ${v.toLocaleString('en-US', { maximumFractionDigits: decimals })}${unit || ''}`;
-                                }
-                            }
-                        }
-                    }
+                    plugins: { legend: { labels: { color: cc.text } }, tooltip: { callbacks: { label: ctx => { const v = ctx.parsed.y; return unit === '$' ? `${ctx.dataset.label}: $${v.toLocaleString('en-US', { maximumFractionDigits: decimals })}` : `${ctx.dataset.label}: ${v.toLocaleString('en-US', { maximumFractionDigits: decimals })}${unit || ''}`; } } } }
                 }
             });
         }
@@ -486,72 +790,26 @@
         function buildMachineChart(filtered) {
             const ctx = document.getElementById('machineChart').getContext('2d');
             const cc = chartColors();
-
             if (charts['machineChart']) charts['machineChart'].destroy();
-
             const byMachine = {};
-            filtered.forEach(r => {
-                byMachine[r.machine] = (byMachine[r.machine] || 0) + r.outputQty;
-            });
-
+            filtered.forEach(r => { byMachine[r.machine] = (byMachine[r.machine] || 0) + r.outputQty; });
             const sorted = Object.entries(byMachine).sort((a, b) => b[1] - a[1]);
-            const labels = sorted.map(s => s[0]);
-            const values = sorted.map(s => s[1]);
-
             charts['machineChart'] = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Total Output (lbs)',
-                        data: values,
-                        backgroundColor: labels.map((_, i) => COLORS[i % COLORS.length] + 'CC'),
-                        borderColor: labels.map((_, i) => COLORS[i % COLORS.length]),
-                        borderWidth: 1
-                    }]
-                },
+                data: { labels: sorted.map(s => s[0]), datasets: [{ label: 'Total Output (lbs)', data: sorted.map(s => s[1]), backgroundColor: sorted.map((_, i) => COLORS[i % COLORS.length] + 'CC'), borderColor: sorted.map((_, i) => COLORS[i % COLORS.length]), borderWidth: 1 }] },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    scales: {
-                        x: {
-                            grid: { color: cc.grid },
-                            ticks: {
-                                color: cc.text,
-                                callback: v => v.toLocaleString('en-US', { maximumFractionDigits: 0 })
-                            }
-                        },
-                        y: {
-                            grid: { color: cc.grid },
-                            ticks: { color: cc.text, font: { size: 11 } }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: ctx => `${ctx.parsed.x.toLocaleString('en-US')} lbs`
-                            }
-                        }
-                    }
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    scales: { x: { grid: { color: cc.grid }, ticks: { color: cc.text, callback: v => v.toLocaleString('en-US', { maximumFractionDigits: 0 }) } }, y: { grid: { color: cc.grid }, ticks: { color: cc.text, font: { size: 11 } } } },
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.x.toLocaleString('en-US')} lbs` } } }
                 }
             });
         }
 
-        // --- Main Render ---
         function render() {
             const filtered = getFiltered();
-            const window = parseInt(document.getElementById('smoothing').value);
-
+            const win = parseInt(document.getElementById('smoothing').value);
             renderKPIs(filtered);
-
-            // Aggregate by date
-            const outputByDate = {};
-            const inputByDate = {};
-            const yieldLossByDate = {};
-            const valueByDate = {};
-
+            const outputByDate = {}, inputByDate = {}, yieldLossByDate = {}, valueByDate = {};
             filtered.forEach(r => {
                 const d = r.dateStr;
                 outputByDate[d] = (outputByDate[d] || 0) + r.outputQty;
@@ -559,35 +817,38 @@
                 yieldLossByDate[d] = (yieldLossByDate[d] || 0) + r.yieldLoss;
                 valueByDate[d] = (valueByDate[d] || 0) + r.outputValue;
             });
-
-            // Yield rate by date
             const yieldByDate = {};
             for (const d of Object.keys(outputByDate)) {
                 const inp = inputByDate[d] || 0;
                 const loss = Math.abs(yieldLossByDate[d] || 0);
                 yieldByDate[d] = inp > 0 ? ((inp - loss) / inp * 100) : 100;
             }
-
-            const smoothedOutput = movingAvg(outputByDate, window);
-            const smoothedYield = movingAvg(yieldByDate, window);
-            const smoothedValue = movingAvg(valueByDate, window);
-
-            const windowLabel = window === 1 ? '' : ` (${window}-day avg)`;
-
-            buildTimeChart('outputChart', smoothedOutput, `Output${windowLabel}`, '#3498db', ' lbs', 0);
-            buildTimeChart('yieldChart', smoothedYield, `Yield Rate${windowLabel}`, '#2ecc71', '%', 1);
-            buildTimeChart('valueChart', smoothedValue, `Output Value${windowLabel}`, '#f39c12', '$', 0);
+            const wl = win === 1 ? '' : ` (${win}-day avg)`;
+            buildTimeChart('outputChart', movingAvg(outputByDate, win), `Output${wl}`, '#3498db', ' lbs', 0);
+            buildTimeChart('yieldChart', movingAvg(yieldByDate, win), `Yield Rate${wl}`, '#2ecc71', '%', 1);
+            buildTimeChart('valueChart', movingAvg(valueByDate, win), `Output Value${wl}`, '#f39c12', '$', 0);
             buildMachineChart(filtered);
         }
 
-        // --- CSV Load ---
-        function loadCSVText(text, name) {
-            const parsed = parseCSV(text);
-            rawData = parsed.map(parseRow);
-            document.getElementById('fileName').textContent = name || 'Loaded';
+        // ==================== DATA LOADED ====================
+
+        function onDataLoaded(sourceName) {
+            document.getElementById('fileName').textContent = sourceName || 'Loaded';
+            document.getElementById('filterControls').style.display = 'flex';
+            document.getElementById('chartsSection').style.display = 'block';
             populateFilters();
             render();
         }
+
+        function loadCSVText(text, name) {
+            snapshotInProcess();
+            const parsed = parseCSV(text);
+            rawData = parsed.map(parseCSVRow);
+            onDataLoaded(name || 'CSV');
+            updateTracker();
+        }
+
+        // ==================== INIT ====================
 
         document.getElementById('csvFile').addEventListener('change', function (e) {
             const file = e.target.files[0];
@@ -597,21 +858,27 @@
             reader.readAsText(file);
         });
 
-        // Try loading default CSV
-        fetch('data.csv')
-            .then(r => { if (!r.ok) throw new Error(); return r.text(); })
-            .then(text => loadCSVText(text, 'data.csv'))
-            .catch(() => {
-                document.getElementById('fileName').textContent = 'Upload a CSV to start';
-            });
-
-        // Re-render on filter/smoothing change
         ['warehouseFilter', 'machineFilter', 'statusFilter', 'smoothing'].forEach(id => {
             document.getElementById(id).addEventListener('change', render);
         });
 
-        // React to dark mode changes
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+
+        // Set default date range (last 30 days)
+        const today = new Date();
+        const monthAgo = new Date(today);
+        monthAgo.setDate(monthAgo.getDate() - 30);
+        document.getElementById('apiDateTo').value = today.toISOString().slice(0, 10);
+        document.getElementById('apiDateFrom').value = monthAgo.toISOString().slice(0, 10);
+
+        // Load saved credentials
+        loadApiCredentials();
+
+        // Try loading default CSV
+        fetch('data.csv')
+            .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+            .then(text => { loadCSVText(text, 'data.csv'); })
+            .catch(() => {});
     </script>
 </body>
 </html>
