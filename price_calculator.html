@@ -225,6 +225,17 @@
         tbody tr.sell-row.loss td:not(:first-child) { color: #e74c3c; }
         tbody tr.sell-row.profit td:not(:first-child) { color: #27ae60; }
 
+        /* Warnings */
+        .warning {
+            background: #fef5e7;
+            border-left: 4px solid #f39c12;
+            color: #7d5a0b;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
         /* Table scroll wrapper */
         .table-scroll {
             overflow-x: auto;
@@ -295,6 +306,7 @@
                 color: #e0e0e0;
             }
             .display-unit-picker label { color: #95a5a6; }
+            .warning { background: #3a2f14; color: #f5c469; }
         }
 
         /* Responsive */
@@ -438,7 +450,7 @@
                 <option value="kg">$/kg</option>
                 <option value="standard_ton">$/std ton</option>
                 <option value="metric_ton">$/mt</option>
-                <option value="percent">%</option>
+                <option value="percent">% markup on cost</option>
             </select>
         </div>
     </div>
@@ -457,6 +469,7 @@
                 </select>
             </div>
         </div>
+        <div id="warnings"></div>
         <div id="resultsSummary"></div>
         <div id="breakdownTable"></div>
     </div>
@@ -465,9 +478,9 @@
         // --- Conversion helpers (everything to $/lb internally) ---
         const TO_LB = {
             lb: 1,
-            kg: 2.20462,
+            kg: 2.2046226218,
             standard_ton: 2000,
-            metric_ton: 2204.62
+            metric_ton: 2204.6226218
         };
 
         function toPerLb(value, unit) {
@@ -523,10 +536,14 @@
                 if (!saved) return;
                 for (const [id, val] of Object.entries(saved)) {
                     if (id === 'mode') continue;
+                    if (!(id in DEFAULTS)) continue;
                     const el = document.getElementById(id);
-                    if (el) el.value = val;
+                    if (!el) continue;
+                    el.value = val;
+                    // A stale/invalid option leaves a <select> blank -> fall back to default
+                    if (el.tagName === 'SELECT' && el.selectedIndex === -1) el.value = DEFAULTS[id];
                 }
-                if (saved.mode) setMode(saved.mode);
+                if (saved.mode === 'buy' || saved.mode === 'sell') setMode(saved.mode);
             } catch (e) {}
         }
 
@@ -649,8 +666,27 @@
 
         function renderResults({ mode, buyLb, oceanFreightLb, drayageLb, overheadLb, marginLb, totalCostLb, sellLb, weightLbs }) {
             const profitLb = sellLb - totalCostLb;
-            const profitPct = totalCostLb !== 0 ? (profitLb / totalCostLb * 100) : 0;
-            const isProfitable = profitLb >= 0;
+            const markupPct = totalCostLb > 0 ? (profitLb / totalCostLb * 100) : NaN;
+            const marginPct = sellLb > 0 ? (profitLb / sellLb * 100) : NaN;
+            // A negative max buy price means the deal cannot work at this sell price
+            const isProfitable = profitLb >= 0 && buyLb >= 0;
+
+            const warnings = [];
+            const usesFlat = ['oceanFreightUnit', 'drayageUnit', 'overheadUnit']
+                .some(id => document.getElementById(id).value === 'flat');
+            if (!(weightLbs > 0)) {
+                warnings.push(usesFlat
+                    ? 'Loading weight is zero, so flat-rate costs cannot be spread per lb and are being ignored.'
+                    : 'Loading weight is zero, so total-load figures are $0.');
+            }
+            if (mode === 'sell' && buyLb < 0) {
+                warnings.push('Costs and margin exceed the sell price: the max buy price is negative (you would need to be paid to take the material).');
+            }
+            if (!isFinite(sellLb) || !isFinite(buyLb)) {
+                warnings.push('Result is not a valid number. Check the margin percentage (it cannot be -100% or lower).');
+            }
+            document.getElementById('warnings').innerHTML =
+                warnings.map(w => `<div class="warning">${w}</div>`).join('');
 
             const dispUnit = document.getElementById('displayUnit').value;
             const dispLabel = UNIT_LABELS[dispUnit];
@@ -735,8 +771,9 @@
                 </table>
                 </div>
                 <p style="margin-top: 12px; font-size: 13px; color: #7f8c8d;">
-                    Margin: <strong style="color: ${isProfitable ? '#27ae60' : '#e74c3c'}">
-                    ${fmtDollar(profitDisp, dispDec)}${dispLabel} (${fmt(profitPct, 1)}%)</strong>
+                    Profit: <strong style="color: ${isProfitable ? '#27ae60' : '#e74c3c'}">
+                    ${fmtDollar(profitDisp, dispDec)}${dispLabel}
+                    (${fmt(markupPct, 1)}% markup on cost, ${fmt(marginPct, 1)}% margin on sell)</strong>
                     &nbsp;|&nbsp; Total load profit:
                     <strong style="color: ${isProfitable ? '#27ae60' : '#e74c3c'}">
                     ${fmtDollar(profitLb * weightLbs, 2)}</strong>
@@ -753,7 +790,6 @@
 
         document.querySelectorAll('input, select').forEach(el => {
             el.addEventListener('input', calculate);
-            el.addEventListener('change', calculate);
         });
     </script>
 </body>
