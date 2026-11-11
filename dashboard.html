@@ -381,13 +381,54 @@
 
         // ==================== DATA PARSING ====================
 
+        function escapeHtml(v) {
+            return String(v == null ? '' : v).replace(/[&<>"']/g,
+                c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        // Local-time YYYY-MM-DD (toISOString() is UTC and can shift the date by a day)
+        function ymd(d) {
+            const p = n => String(n).padStart(2, '0');
+            return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+        }
+
+        function toNum(v) {
+            if (v == null) return 0;
+            if (typeof v === 'number') return isFinite(v) ? v : 0;
+            return parseFloat(String(v).replace(/[$,]/g, '')) || 0;
+        }
+
+        // Split CSV text into rows of fields, honoring quoted fields
+        // (embedded commas, newlines and "" escapes) and CRLF line endings.
+        function splitCSV(text) {
+            const out = [];
+            let row = [], field = '', inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                const c = text[i];
+                if (inQuotes) {
+                    if (c === '"') {
+                        if (text[i + 1] === '"') { field += '"'; i++; }
+                        else inQuotes = false;
+                    } else field += c;
+                } else if (c === '"') inQuotes = true;
+                else if (c === ',') { row.push(field); field = ''; }
+                else if (c === '\n' || c === '\r') {
+                    if (c === '\r' && text[i + 1] === '\n') i++;
+                    row.push(field); out.push(row); row = []; field = '';
+                } else field += c;
+            }
+            if (field !== '' || row.length) { row.push(field); out.push(row); }
+            return out;
+        }
+
         // Parse CSV text (from file upload or data.csv)
         function parseCSV(text) {
-            const lines = text.trim().split('\n');
-            const headers = lines[0].split(',').map(h => h.trim());
+            const lines = splitCSV(text.replace(/^\uFEFF/, '').trim());
+            if (lines.length === 0) return [];
+            const headers = lines[0].map(h => h.trim());
             const rows = [];
             for (let i = 1; i < lines.length; i++) {
-                const vals = lines[i].split(',');
+                const vals = lines[i];
                 if (vals.length < 10) continue;
                 const row = {};
                 headers.forEach((h, idx) => row[h] = (vals[idx] || '').trim());
@@ -398,53 +439,50 @@
 
         function parseCSVRow(row) {
             const dateParts = (row['Job Date'] || '').split(' ')[0].split('/');
-            const date = dateParts.length === 3
+            let date = dateParts.length === 3
                 ? new Date(+dateParts[2], +dateParts[0] - 1, +dateParts[1])
                 : null;
+            if (date && isNaN(date)) date = null;
             const machine = (row['Machine'] || '').replace(/\s*\(\d+\w{2} SHIFT\)/i, '').trim();
             return {
                 jobNo: (row['Job No'] || '').trim(),
                 date,
-                dateStr: date ? date.toISOString().slice(0, 10) : '',
+                dateStr: date && !isNaN(date) ? ymd(date) : '',
                 warehouse: (row['Warehouse'] || '').trim(),
                 machine,
                 fullMachine: (row['Machine'] || '').trim(),
                 status: (row['Warehouse Status'] || '').trim().toUpperCase(),
                 accountingStatus: (row['Status'] || '').trim(),
-                outputQty: parseFloat(row['Output Qty']) || 0,
-                inputQty: parseFloat(row['Input Qty']) || 0,
-                yieldLoss: parseFloat(row['Yield Loss Qty']) || 0,
-                inputValue: parseFloat(row['Input Value']) || 0,
-                outputValue: parseFloat(row['Output Value']) || 0,
-                expenses: parseFloat(row['Expenses']) || 0
+                outputQty: toNum(row['Output Qty']),
+                inputQty: toNum(row['Input Qty']),
+                yieldLoss: toNum(row['Yield Loss Qty']),
+                inputValue: toNum(row['Input Value']),
+                outputValue: toNum(row['Output Value']),
+                expenses: toNum(row['Expenses'])
             };
         }
 
         // Parse API JSON response
         function parseAPIRow(row) {
             const dateStr = (row.JobDate || '').split('T')[0];
-            const date = dateStr ? new Date(dateStr + 'T00:00:00') : null;
+            let date = dateStr ? new Date(dateStr + 'T00:00:00') : null;
+            if (date && isNaN(date)) date = null;
             const machine = (row.Machine || '').replace(/\s*\(\d+\w{2} SHIFT\)/i, '').trim();
-            const parseQty = v => {
-                if (v == null) return 0;
-                if (typeof v === 'number') return v;
-                return parseFloat(String(v).replace(/,/g, '')) || 0;
-            };
             return {
                 jobNo: String(row.JobNo || ''),
                 date,
-                dateStr: date ? date.toISOString().slice(0, 10) : '',
+                dateStr: date && !isNaN(date) ? ymd(date) : '',
                 warehouse: (row.Warehouse || '').trim(),
                 machine,
                 fullMachine: (row.Machine || '').trim(),
                 status: (row.WarehouseStatus || '').trim().toUpperCase(),
                 accountingStatus: (row.Status || '').trim(),
-                outputQty: parseQty(row.OutputQty),
-                inputQty: parseQty(row.InputQty),
-                yieldLoss: parseQty(row.YieldLossQty),
-                inputValue: row.InputValue || 0,
-                outputValue: row.OutputValue || 0,
-                expenses: row.Expenses || 0
+                outputQty: toNum(row.OutputQty),
+                inputQty: toNum(row.InputQty),
+                yieldLoss: toNum(row.YieldLossQty),
+                inputValue: toNum(row.InputValue),
+                outputValue: toNum(row.OutputValue),
+                expenses: toNum(row.Expenses)
             };
         }
 
@@ -528,18 +566,20 @@
 
                 const json = await resp.json();
 
-                if (json.length === 1 && json[0].ERROR) {
+                if (!Array.isArray(json)) {
+                    throw new Error((json && (json.ERROR || json.Message || json.message)) || 'Unexpected response format');
+                }
+                if (json.length === 1 && json[0] && json[0].ERROR) {
                     throw new Error(json[0].ERROR);
                 }
 
                 showApiStatus('Loaded ' + json.length + ' jobs from cieTrade API.', 'success');
 
-                // Snapshot previous IN PROCESS jobs before loading new data
-                snapshotInProcess();
-
                 rawData = json.map(parseAPIRow);
                 onDataLoaded('cieTrade API');
+                // Compare against the stored snapshot, then store this fetch for next time
                 updateTracker();
+                snapshotInProcess();
 
             } catch (err) {
                 let msg = err.message;
@@ -580,7 +620,7 @@
             let prev;
             try { prev = JSON.parse(localStorage.getItem(SNAPSHOT_KEY)); } catch (e) {}
 
-            if (!prev || prev.jobs.length === 0) {
+            if (!prev || !Array.isArray(prev.jobs)) {
                 card.style.display = 'block';
                 body.innerHTML = '<div class="empty-state">No previous snapshot to compare against. Fetch again later to see changes.</div>';
                 tsEl.textContent = '';
@@ -588,7 +628,7 @@
             }
 
             const prevDate = new Date(prev.timestamp);
-            tsEl.textContent = 'Previous fetch: ' + prevDate.toLocaleString();
+            tsEl.textContent = 'Previous snapshot: ' + prevDate.toLocaleString();
 
             const prevMap = {};
             prev.jobs.forEach(j => prevMap[j.jobNo] = j);
@@ -672,13 +712,13 @@
 
             for (const r of rows) {
                 const bc = badgeClass[r.change] || 'badge-unchanged';
-                const bl = badgeLabel[r.change] || r.change;
+                const bl = badgeLabel[r.change] || escapeHtml(r.change);
                 const fmt = n => n != null ? n.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '--';
                 html += `<tr>
-                    <td>${r.jobNo}</td>
-                    <td>${r.dateStr}</td>
-                    <td>${r.machine}</td>
-                    <td>${r.warehouse}</td>
+                    <td>${escapeHtml(r.jobNo)}</td>
+                    <td>${escapeHtml(r.dateStr)}</td>
+                    <td>${escapeHtml(r.machine)}</td>
+                    <td>${escapeHtml(r.warehouse)}</td>
                     <td>${fmt(r.outputQty)}</td>
                     <td>${r.currentOutput != null ? fmt(r.currentOutput) : '--'}</td>
                     <td><span class="badge ${bc}">${bl}</span></td>
@@ -697,9 +737,9 @@
             if (windowDays <= 1) return dataMap;
             const smoothed = {};
             for (let i = 0; i < dates.length; i++) {
-                const endDate = new Date(dates[i]);
+                const endDate = new Date(dates[i]);   // YYYY-MM-DD parses as UTC
                 const startDate = new Date(endDate);
-                startDate.setDate(startDate.getDate() - windowDays + 1);
+                startDate.setUTCDate(startDate.getUTCDate() - windowDays + 1);
                 let sum = 0, count = 0;
                 for (let j = i; j >= 0; j--) {
                     const d = new Date(dates[j]);
@@ -730,10 +770,10 @@
             const machines = [...new Set(rawData.map(r => r.machine))].sort();
             const whSel = document.getElementById('warehouseFilter');
             whSel.innerHTML = '<option value="all">All Warehouses</option>';
-            warehouses.forEach(w => { if (w) whSel.innerHTML += `<option value="${w}">${w}</option>`; });
+            warehouses.forEach(w => { if (w) whSel.add(new Option(w, w)); });
             const machSel = document.getElementById('machineFilter');
             machSel.innerHTML = '<option value="all">All Machines</option>';
-            machines.forEach(m => { if (m) machSel.innerHTML += `<option value="${m}">${m}</option>`; });
+            machines.forEach(m => { if (m) machSel.add(new Option(m, m)); });
         }
 
         function renderKPIs(filtered) {
@@ -745,7 +785,7 @@
             const totalExpenses = filtered.reduce((s, r) => s + r.expenses, 0);
             const dates = [...new Set(filtered.map(r => r.dateStr))];
             const numDays = dates.length || 1;
-            const yieldRate = totalInput > 0 ? ((totalInput - Math.abs(totalYieldLoss)) / totalInput * 100) : 0;
+            const yieldRate = totalInput > 0 ? ((totalInput - totalYieldLoss) / totalInput * 100) : 0;
             const fmt = n => n.toLocaleString('en-US', { maximumFractionDigits: 0 });
             const fmtD = n => '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
 
@@ -820,8 +860,9 @@
             const yieldByDate = {};
             for (const d of Object.keys(outputByDate)) {
                 const inp = inputByDate[d] || 0;
-                const loss = Math.abs(yieldLossByDate[d] || 0);
-                yieldByDate[d] = inp > 0 ? ((inp - loss) / inp * 100) : 100;
+                // Yield Loss Qty = input - output, so a negative value is a gain, not a loss
+                const loss = yieldLossByDate[d] || 0;
+                if (inp > 0) yieldByDate[d] = (inp - loss) / inp * 100;  // skip days with no recorded input
             }
             const wl = win === 1 ? '' : ` (${win}-day avg)`;
             buildTimeChart('outputChart', movingAvg(outputByDate, win), `Output${wl}`, '#3498db', ' lbs', 0);
@@ -840,12 +881,14 @@
             render();
         }
 
-        function loadCSVText(text, name) {
-            snapshotInProcess();
+        // saveSnapshot=false for the bundled data.csv so a page reload does not
+        // overwrite the tracker baseline with stale sample data.
+        function loadCSVText(text, name, saveSnapshot = true) {
             const parsed = parseCSV(text);
             rawData = parsed.map(parseCSVRow);
             onDataLoaded(name || 'CSV');
             updateTracker();
+            if (saveSnapshot) snapshotInProcess();
         }
 
         // ==================== INIT ====================
@@ -856,20 +899,21 @@
             const reader = new FileReader();
             reader.onload = () => loadCSVText(reader.result, file.name);
             reader.readAsText(file);
+            e.target.value = '';  // allow re-loading the same file
         });
 
         ['warehouseFilter', 'machineFilter', 'statusFilter', 'smoothing'].forEach(id => {
             document.getElementById(id).addEventListener('change', render);
         });
 
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (rawData.length) render(); });
 
         // Set default date range (last 30 days)
         const today = new Date();
         const monthAgo = new Date(today);
         monthAgo.setDate(monthAgo.getDate() - 30);
-        document.getElementById('apiDateTo').value = today.toISOString().slice(0, 10);
-        document.getElementById('apiDateFrom').value = monthAgo.toISOString().slice(0, 10);
+        document.getElementById('apiDateTo').value = ymd(today);
+        document.getElementById('apiDateFrom').value = ymd(monthAgo);
 
         // Load saved credentials
         loadApiCredentials();
@@ -877,7 +921,7 @@
         // Try loading default CSV
         fetch('data.csv')
             .then(r => { if (!r.ok) throw new Error(); return r.text(); })
-            .then(text => { loadCSVText(text, 'data.csv'); })
+            .then(text => { loadCSVText(text, 'data.csv', false); })
             .catch(() => {});
     </script>
 </body>
